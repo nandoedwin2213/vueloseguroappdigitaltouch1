@@ -17,7 +17,7 @@ export const DEFAULT_CONFIG: SystemConfig = {
   soundEffectsEnabled: true,
   cloudSyncIntervalSec: 10,
   randomAlcoholAuditEnabled: true,
-  randomAlcoholAuditPercent: 12,
+  randomAlcoholAuditPercent: 1, // 1% probability (1 out of 100 checkups - max 1-2 per day)
 };
 
 // Seed initial mock records with Vital Signs

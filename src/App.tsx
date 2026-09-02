@@ -119,9 +119,9 @@ export const App: React.FC = () => {
       finalResult = 'OBSERVACION';
     }
 
-    // Random Alcohol Breathalyzer Audit Lottery
+    // Random Alcohol Breathalyzer Audit Lottery (1 out of 100 = 1%)
     const isRandomAlcoholAudited = config.randomAlcoholAuditEnabled
-      ? (Math.random() * 100 < (config.randomAlcoholAuditPercent || 12))
+      ? (Math.random() * 100 < (config.randomAlcoholAuditPercent !== undefined ? config.randomAlcoholAuditPercent : 1))
       : false;
 
     const now = new Date();

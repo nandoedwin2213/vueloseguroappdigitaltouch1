@@ -177,7 +177,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
               </div>
             </div>
             <span className="bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400 text-[11px]">
-              Probabilidad Aleatoria Evaluada 12%
+              Probabilidad Aleatoria Evaluada 1% (1 en 100 sorteos)
             </span>
           </div>
         )}
