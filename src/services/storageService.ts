@@ -16,6 +16,8 @@ export const DEFAULT_CONFIG: SystemConfig = {
   autoPrintReceipt: false,
   soundEffectsEnabled: true,
   cloudSyncIntervalSec: 10,
+  randomAlcoholAuditEnabled: true,
+  randomAlcoholAuditPercent: 12,
 };
 
 // Seed initial mock records with Vital Signs

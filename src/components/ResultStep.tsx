@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PreFlightCheckupRecord } from '../types';
-import { Award, AlertTriangle, XCircle, Home, CheckCircle2, Shield, HeartPulse, Zap, Info, RotateCcw, Clock } from 'lucide-react';
+import { Award, AlertTriangle, XCircle, Home, CheckCircle2, Shield, HeartPulse, Zap, Info, RotateCcw, Clock, ShieldAlert, Radio } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ThermalTicket } from './ThermalTicket';
 import { soundFX } from '../services/soundService';
@@ -19,10 +19,14 @@ export const ResultStep: React.FC<ResultStepProps> = ({
   const isApto = record.finalResult === 'APTO';
   const isObs = record.finalResult === 'OBSERVACION';
 
-  // 15-Second Auto-Reset Countdown Timer for Pilot Kiosk
+  // 20-Second Auto-Reset Countdown Timer for Pilot Kiosk
   const [countdown, setCountdown] = useState<number>(20);
 
+  // Radar scanning state for Random Alcohol Audit Lottery
+  const [isScanningAudit, setIsScanningAudit] = useState<boolean>(true);
+
   useEffect(() => {
+    // Sound FX & Confetti trigger
     if (isApto) {
       soundFX.playSuccess();
       try {
@@ -36,6 +40,14 @@ export const ResultStep: React.FC<ResultStepProps> = ({
       soundFX.playWarning();
     }
 
+    // Simulate 2.2s Radar Scan for Random Alcohol Audit
+    const scanTimer = setTimeout(() => {
+      setIsScanningAudit(false);
+      if (record.isRandomAlcoholAudited) {
+        soundFX.playWarning();
+      }
+    }, 2200);
+
     // Start auto-reset timer
     const interval = setInterval(() => {
       setCountdown((prev) => {
@@ -48,8 +60,11 @@ export const ResultStep: React.FC<ResultStepProps> = ({
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isApto, onGoHome]);
+    return () => {
+      clearTimeout(scanTimer);
+      clearInterval(interval);
+    };
+  }, [isApto, onGoHome, record.isRandomAlcoholAudited]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 select-none">
@@ -69,10 +84,63 @@ export const ResultStep: React.FC<ResultStepProps> = ({
 
         <button
           onClick={onGoHome}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <RotateCcw size={16} /> Finalizar y Listo 🚀
         </button>
+      </div>
+
+      {/* RANDOM ALCOHOL AUDIT RADAR SCANNER BANNER (Deterrent Feature) */}
+      <div className="bg-slate-900 border-2 border-amber-500/80 p-5 rounded-3xl shadow-2xl relative overflow-hidden">
+        {isScanningAudit ? (
+          <div className="flex items-center justify-center gap-4 py-3 text-amber-400 animate-pulse">
+            <Radio size={32} className="animate-spin text-amber-400" />
+            <div>
+              <div className="text-xs font-mono font-black uppercase tracking-widest text-slate-400">
+                SISTEMA ALEATORIO DE AUDITORÍA FAE (RST-FAE)
+              </div>
+              <h3 className="text-lg font-black text-amber-400">
+                📡 ESCANEANDO SORTEO ALEATORIO DE ALCOHOLEMIA...
+              </h3>
+            </div>
+          </div>
+        ) : record.isRandomAlcoholAudited ? (
+          /* PILOT SELECTED FOR RANDOM ALCOHOL TEST! */
+          <div className="bg-gradient-to-r from-rose-950 via-rose-900 to-rose-950 border-2 border-rose-500 p-5 rounded-2xl text-white space-y-2 shadow-2xl animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-rose-600 rounded-2xl text-white shadow-lg">
+                <ShieldAlert size={36} />
+              </div>
+              <div>
+                <span className="text-xs font-black uppercase tracking-widest bg-rose-900 px-3 py-0.5 rounded-full border border-rose-400 text-rose-200">
+                  🚨 INSPECCIÓN ALEATORIA ACTIVADA
+                </span>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight mt-0.5">
+                  ¡SELECCIONADO PARA PRUEBA DE ALCOHOLEMIA ALEATORIA!
+                </h3>
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-rose-100 pl-1">
+              Ha sido seleccionado por el algoritmo aleatorio para examen de alcoholemia en aliento y valoración presencial con el <strong className="text-white underline">MAYOR EDWIN AYALA (MÉDICO AEROESPACIAL)</strong> en la estación <strong className="text-white">DEA/MEDICINA DE AVIACIÓN</strong>.
+            </p>
+          </div>
+        ) : (
+          /* PILOT NOT SELECTED (CLEAR) */
+          <div className="flex items-center justify-between gap-3 text-xs font-bold text-slate-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-950 border border-emerald-700 text-emerald-400 rounded-xl">
+                <CheckCircle2 size={20} />
+              </div>
+              <div>
+                <span className="text-emerald-400 uppercase font-black">Inspección Aleatoria de Alcoholemia:</span>
+                <div className="text-sm font-extrabold text-white">🟢 LIBERADO / SIN NOVEDAD DE SORTEO</div>
+              </div>
+            </div>
+            <span className="bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400 text-[11px]">
+              Probabilidad Aleatoria Evaluada 12%
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Main Dictamen WOW Banner Card */}

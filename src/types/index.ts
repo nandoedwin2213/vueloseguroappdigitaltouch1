@@ -87,7 +87,8 @@ export interface PreFlightCheckupRecord {
   imSafe: ImSafeEvaluation;
   reaction: ReactionMetrics;
   finalResult: AssessmentStatus;
-  observationsList: string[]; // List of specific observation notes (e.g. "Presión arterial elevada", "Tiempo de reacción alterado")
+  observationsList: string[]; // List of specific observation notes
+  isRandomAlcoholAudited?: boolean; // True if selected by random alcohol lottery algorithm!
   cloudSyncStatus: 'SYNCED' | 'PENDING';
   syncedAt?: number;
 }
@@ -105,4 +106,7 @@ export interface SystemConfig {
   autoPrintReceipt: boolean;
   soundEffectsEnabled: boolean;
   cloudSyncIntervalSec: number;
+  // Random Alcohol Breathalyzer Audit Lottery (Deterrent feature)
+  randomAlcoholAuditEnabled: boolean;
+  randomAlcoholAuditPercent: number; // Probability percentage (e.g. 10 = 10% chance)
 }

@@ -119,6 +119,11 @@ export const App: React.FC = () => {
       finalResult = 'OBSERVACION';
     }
 
+    // Random Alcohol Breathalyzer Audit Lottery
+    const isRandomAlcoholAudited = config.randomAlcoholAuditEnabled
+      ? (Math.random() * 100 < (config.randomAlcoholAuditPercent || 12))
+      : false;
+
     const now = new Date();
     const newRecord: PreFlightCheckupRecord = {
       id: generateNextId(),
@@ -133,6 +138,7 @@ export const App: React.FC = () => {
       reaction,
       finalResult,
       observationsList,
+      isRandomAlcoholAudited,
       cloudSyncStatus: config.cloudSyncEnabled ? 'PENDING' : 'SYNCED',
     };
 

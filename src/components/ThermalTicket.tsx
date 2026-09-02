@@ -86,6 +86,16 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
           <div className="font-black text-xs underline text-black">EVALUACIÓN FISIOLÓGICA PRE-VUELO</div>
         </div>
 
+        {/* RANDOM ALCOHOL AUDIT ALERT STAMP IF AUDITED */}
+        {record.isRandomAlcoholAudited && (
+          <div className="my-2 p-2 border-4 border-black text-center font-black text-xs uppercase bg-white text-black">
+            <div>*** 🚨 ATENCIÓN PILOTO 🚨 ***</div>
+            <div className="text-sm font-black">SELECCIONADO PARA PRUEBA DE ALCOHOLEMIA</div>
+            <div className="text-[10px] font-black">PRESÉNTESE CON EL MÉDICO AEROESPACIAL</div>
+            <div className="text-[9px] font-black">({operatorName})</div>
+          </div>
+        )}
+
         {/* Checkup Metadata */}
         <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black font-black text-black">
           <div className="flex justify-between"><strong className="font-black">ID CHEQUEO:</strong> <span className="font-black">{record.id}</span></div>

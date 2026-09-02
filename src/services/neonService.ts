@@ -35,11 +35,18 @@ export async function initNeonTable(): Promise<boolean> {
         reflejo_mediana_ms INT NOT NULL,
         dictamen_final VARCHAR(30) NOT NULL,
         observaciones TEXT,
+        is_random_alcohol_audited BOOLEAN DEFAULT FALSE,
         estacion_id VARCHAR(50),
         operador_nombre VARCHAR(100),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
+
+    // Try adding the column in case the table already existed
+    try {
+      await sql`ALTER TABLE chequeos_prevuelo ADD COLUMN IF NOT EXISTS is_random_alcohol_audited BOOLEAN DEFAULT FALSE;`;
+    } catch (e) {}
+
     console.log('✅ Neon PostgreSQL Table `chequeos_prevuelo` checked/created successfully.');
     return true;
   } catch (err) {
@@ -82,6 +89,7 @@ export async function uploadRecordToNeon(record: PreFlightCheckupRecord): Promis
         reflejo_mediana_ms,
         dictamen_final,
         observaciones,
+        is_random_alcohol_audited,
         estacion_id,
         operador_nombre
       ) VALUES (
@@ -107,12 +115,14 @@ export async function uploadRecordToNeon(record: PreFlightCheckupRecord): Promis
         ${record.reaction.medianMs},
         ${record.finalResult},
         ${obsString},
+        ${!!record.isRandomAlcoholAudited},
         ${record.stationId},
         ${record.operatorName}
       )
       ON CONFLICT (id) DO UPDATE SET
         dictamen_final = EXCLUDED.dictamen_final,
-        observaciones = EXCLUDED.observaciones;
+        observaciones = EXCLUDED.observaciones,
+        is_random_alcohol_audited = EXCLUDED.is_random_alcohol_audited;
     `;
     console.log(`☁️ Record ${record.id} uploaded successfully to Neon Postgres!`);
     return true;
