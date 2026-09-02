@@ -1,0 +1,372 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { ReactionMetrics, ReactionTrial, SystemConfig, AssessmentStatus } from '../types';
+import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { soundFX } from '../services/soundService';
+
+interface ReflexStepProps {
+  config: SystemConfig;
+  onSubmit: (metrics: ReactionMetrics) => void;
+  onBack: () => void;
+}
+
+type TestState = 'INSTRUCTIONS' | 'WAITING' | 'STIMULUS' | 'ANTICIPATED_ERROR' | 'TRIAL_FINISHED' | 'ALL_FINISHED';
+
+export const ReflexStep: React.FC<ReflexStepProps> = ({
+  config,
+  onSubmit,
+  onBack,
+}) => {
+  const totalRequiredTrials = config.reactionTrialsCount || 5;
+
+  const [testState, setTestState] = useState<TestState>('INSTRUCTIONS');
+  const [currentTrialIndex, setCurrentTrialIndex] = useState<number>(1);
+  const [trials, setTrials] = useState<ReactionTrial[]>([]);
+
+  // Last measured trial result for immediate visual feedback
+  const [lastTrialMs, setLastTrialMs] = useState<number | null>(null);
+
+  // High-precision timestamps using performance.now()
+  const stimulusStartTimeRef = useRef<number>(0);
+  const timerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Start a trial cycle
+  const startNextTrial = () => {
+    setLastTrialMs(null);
+    setTestState('WAITING');
+
+    // Random delay between 1500ms and 4200ms
+    const randomDelay = Math.floor(Math.random() * 2700) + 1500;
+
+    if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+
+    timerTimeoutRef.current = setTimeout(() => {
+      // Sincronización con el refresco de pantalla mediante requestAnimationFrame
+      requestAnimationFrame(() => {
+        stimulusStartTimeRef.current = performance.now();
+        setTestState('STIMULUS');
+        soundFX.playCue();
+      });
+    }, randomDelay);
+  };
+
+  // Handle Touch or Click on the screen zone
+  const handleTouchZone = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    if (testState === 'WAITING') {
+      // Touched too early (Anticipated / Cheating)
+      if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+      soundFX.playWarning();
+      setTestState('ANTICIPATED_ERROR');
+      
+      const newTrial: ReactionTrial = {
+        trialIndex: currentTrialIndex,
+        delayMs: 0,
+        reactionTimeMs: 0,
+        isAnticipated: true,
+        isCorrect: false,
+        timestamp: Date.now(),
+      };
+
+      setTrials((prev) => [...prev, newTrial]);
+      return;
+    }
+
+    if (testState === 'STIMULUS') {
+      // Touch captured immediately with performance.now()
+      soundFX.playTap();
+      const touchTime = performance.now();
+      const reactionTimeMs = Math.round(touchTime - stimulusStartTimeRef.current);
+      setLastTrialMs(reactionTimeMs);
+
+      const newTrial: ReactionTrial = {
+        trialIndex: currentTrialIndex,
+        delayMs: Math.round(stimulusStartTimeRef.current),
+        reactionTimeMs,
+        isAnticipated: false,
+        isCorrect: reactionTimeMs >= 120, // Valid human reflex lower bound
+        timestamp: Date.now(),
+      };
+
+      const updatedTrials = [...trials, newTrial];
+      setTrials(updatedTrials);
+
+      if (currentTrialIndex >= totalRequiredTrials) {
+        setTestState('ALL_FINISHED');
+      } else {
+        setTestState('TRIAL_FINISHED');
+      }
+    }
+  };
+
+  // Reset or Retry Test
+  const resetEntireTest = () => {
+    soundFX.playTap();
+    if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+    setTrials([]);
+    setCurrentTrialIndex(1);
+    setTestState('INSTRUCTIONS');
+  };
+
+  // Compute final statistics
+  const validTrials = trials.filter((t) => !t.isAnticipated && t.reactionTimeMs > 0);
+  const validTimes = validTrials.map((t) => t.reactionTimeMs);
+
+  const minMs = validTimes.length > 0 ? Math.min(...validTimes) : 0;
+  const maxMs = validTimes.length > 0 ? Math.max(...validTimes) : 0;
+  const avgMs = validTimes.length > 0 ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length) : 0;
+
+  // Median calculation
+  let medianMs = 0;
+  if (validTimes.length > 0) {
+    const sorted = [...validTimes].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    medianMs = sorted.length % 2 !== 0 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  }
+
+  const correctCount = validTrials.length;
+  const anticipatedCount = trials.filter((t) => t.isAnticipated).length;
+  const incorrectCount = trials.length - correctCount - anticipatedCount;
+
+  // Compute Reaction Evaluation Status based on Config Thresholds
+  let evaluationStatus: AssessmentStatus = 'APTO';
+  if (avgMs > config.reactionTimeObservacionMax || anticipatedCount >= 3) {
+    evaluationStatus = 'NO_APTO';
+  } else if (avgMs > config.reactionTimeAptoMax || anticipatedCount >= 1) {
+    evaluationStatus = 'OBSERVACION';
+  }
+
+  const handleFinish = () => {
+    soundFX.playTap();
+    onSubmit({
+      trials,
+      totalTrials: trials.length,
+      minMs,
+      maxMs,
+      avgMs,
+      medianMs,
+      correctCount,
+      incorrectCount,
+      anticipatedCount,
+      evaluationStatus,
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 select-none">
+      {/* Header Banner */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
+        <div>
+          <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Paso 4 de 5 ⚡</span>
+          <h2 className="text-2xl font-black text-white flex items-center gap-3">
+            <Zap className="text-emerald-400" size={28} /> Prueba de Reflejo Cerebro-Mano
+          </h2>
+          <p className="text-slate-400 text-xs mt-1">
+            Medición de tiempo de reacción de alta precisión en milisegundos (`performance.now()`).
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            soundFX.playTap();
+            onBack();
+          }}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
+        >
+          <ArrowLeft size={16} /> Atrás
+        </button>
+      </div>
+
+      {/* STATE 1: INSTRUCTIONS */}
+      {testState === 'INSTRUCTIONS' && (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl space-y-6 text-center">
+          <div className="w-20 h-20 bg-emerald-950 border-2 border-emerald-500 text-emerald-400 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-emerald-950">
+            <Timer size={48} />
+          </div>
+
+          <div className="space-y-3 max-w-xl mx-auto">
+            <h3 className="text-2xl font-black text-white">Instrucciones de la Prueba</h3>
+            <p className="text-slate-300 text-sm leading-relaxed font-medium">
+              1. Mantenga su dedo a unos centímetros de la pantalla.<br />
+              2. La pantalla estará en color gris con el mensaje <strong className="text-amber-400">"ESPERE SEÑAL"</strong> durante un tiempo aleatorio.<br />
+              3. En cuanto la pantalla cambie a <strong className="text-emerald-400">VERDE RADIANTE 🟢</strong>, toque el objetivo lo más rápido posible.<br />
+              4. Se realizarán <strong className="text-white">{totalRequiredTrials} repeticiones</strong>. No toque antes de tiempo.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playTap();
+              startNextTrial();
+            }}
+            className="w-full max-w-md mx-auto py-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-black text-xl rounded-2xl shadow-xl shadow-emerald-950 border border-emerald-400 flex items-center justify-center gap-3 transition-all cursor-pointer"
+          >
+            <span>INICIAR PRUEBA DE REFLEJOS ⚡</span>
+            <Zap size={24} />
+          </button>
+        </div>
+      )}
+
+      {/* STATE 2 & 3: TOUCH INTERACTIVE ZONE (WAITING or STIMULUS) */}
+      {(testState === 'WAITING' || testState === 'STIMULUS') && (
+        <div
+          onPointerDown={handleTouchZone}
+          className={`w-full min-h-[420px] rounded-3xl border-4 flex flex-col items-center justify-center p-8 text-center cursor-pointer touch-none select-none transition-colors duration-75 shadow-2xl ${
+            testState === 'WAITING'
+              ? 'bg-slate-900 border-slate-700 hover:bg-slate-850'
+              : 'bg-emerald-500 border-emerald-300 shadow-emerald-500/50 scale-101 animate-pulse'
+          }`}
+        >
+          {testState === 'WAITING' && (
+            <div className="space-y-4 pointer-events-none">
+              <div className="w-24 h-24 bg-slate-800 border border-slate-600 rounded-full mx-auto flex items-center justify-center text-amber-400 animate-pulse">
+                <Timer size={48} />
+              </div>
+              <h3 className="text-3xl font-black text-amber-400 uppercase tracking-wider">
+                ¡ESPERE SEÑAL VERDE!
+              </h3>
+              <p className="text-slate-400 text-sm">
+                Ensayo {currentTrialIndex} de {totalRequiredTrials} • No toque la pantalla aún...
+              </p>
+            </div>
+          )}
+
+          {testState === 'STIMULUS' && (
+            <div className="space-y-4 pointer-events-none">
+              <div className="w-32 h-32 bg-white text-emerald-900 rounded-full mx-auto flex items-center justify-center font-black text-3xl shadow-2xl animate-bounce">
+                ¡TOQUE YA!
+              </div>
+              <h3 className="text-4xl font-black text-white uppercase tracking-widest">
+                ¡TOQUE LA PANTALLA AHORA!
+              </h3>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* STATE 4: ANTICIPATED TOUCH ERROR */}
+      {testState === 'ANTICIPATED_ERROR' && (
+        <div className="bg-slate-900 border-2 border-rose-600 p-8 rounded-2xl shadow-2xl text-center space-y-6">
+          <div className="w-20 h-20 bg-rose-950 border-2 border-rose-500 text-rose-400 rounded-full mx-auto flex items-center justify-center">
+            <ShieldAlert size={48} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black text-rose-400">⚠️ RESPUESTA ANTICIPADA</h3>
+            <p className="text-slate-300 text-sm">
+              Ha tocado la pantalla antes de la aparición de la señal verde. La anticipación no mide reflejos reales.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playTap();
+              startNextTrial();
+            }}
+            className="w-full max-w-sm mx-auto py-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <RotateCcw size={20} /> REPETIR ENSAYO
+          </button>
+        </div>
+      )}
+
+      {/* STATE 5: INTERMEDIATE TRIAL FINISHED */}
+      {testState === 'TRIAL_FINISHED' && (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
+          <div className="w-20 h-20 bg-emerald-950 border-2 border-emerald-500 text-emerald-400 rounded-full mx-auto flex items-center justify-center">
+            <CheckCircle size={48} />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-bold text-slate-400 uppercase">Ensayo {currentTrialIndex} Completado</span>
+            <div className="text-5xl font-black font-mono text-emerald-400">
+              {lastTrialMs} <span className="text-2xl text-slate-400">ms</span>
+            </div>
+            <p className="text-xs text-slate-400">Tiempo de reacción registrado con éxito.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playTap();
+              setCurrentTrialIndex((prev) => prev + 1);
+              startNextTrial();
+            }}
+            className="w-full max-w-sm mx-auto py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>SIGUIENTE ENSAYO ({currentTrialIndex + 1}/{totalRequiredTrials}) ⚡</span>
+            <ArrowRight size={20} />
+          </button>
+        </div>
+      )}
+
+      {/* STATE 6: ALL FINISHED - METRICS BREAKDOWN */}
+      {testState === 'ALL_FINISHED' && (
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl space-y-6">
+          <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Resultado de Reflejos</span>
+              <h3 className="text-2xl font-black text-white">Resumen de Tiempos de Reacción ⚡</h3>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetEntireTest}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw size={14} /> Repetir Prueba
+            </button>
+          </div>
+
+          {/* Primary Metric Tiles */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {/* Avg */}
+            <div className="bg-slate-950 border-2 border-emerald-600/80 p-4 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-emerald-400 uppercase">Tiempo Promedio</div>
+              <div className="text-3xl font-black text-emerald-400 font-mono">{avgMs} <span className="text-sm text-slate-400">ms</span></div>
+              <div className="text-xs text-slate-500">Media de aciertos</div>
+            </div>
+
+            {/* Min */}
+            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-blue-400 uppercase">Mejor Tiempo (Mín)</div>
+              <div className="text-3xl font-black text-blue-400 font-mono">{minMs} <span className="text-sm text-slate-400">ms</span></div>
+              <div className="text-xs text-slate-500">Reflejo más rápido</div>
+            </div>
+
+            {/* Max */}
+            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-purple-400 uppercase">Peor Tiempo (Máx)</div>
+              <div className="text-3xl font-black text-purple-400 font-mono">{maxMs} <span className="text-sm text-slate-400">ms</span></div>
+              <div className="text-xs text-slate-500">Reflejo más lento</div>
+            </div>
+
+            {/* Median */}
+            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-amber-400 uppercase">Mediana</div>
+              <div className="text-3xl font-black text-amber-400 font-mono">{medianMs} <span className="text-sm text-slate-400">ms</span></div>
+              <div className="text-xs text-slate-500">Valor central</div>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <button
+            type="button"
+            onClick={handleFinish}
+            className="w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-98 text-white font-black text-xl rounded-2xl shadow-xl shadow-emerald-950 border border-emerald-400 flex items-center justify-center gap-3 transition-all cursor-pointer"
+          >
+            <span>GENERAR APTITUD FINAL 🏆</span>
+            <ArrowRight size={28} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
