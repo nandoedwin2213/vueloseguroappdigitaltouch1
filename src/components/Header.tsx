@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Lock, Clock, ShieldCheck, Check, Download, Monitor, X, HelpCircle } from 'lucide-react';
-import { SystemConfig } from '../types';
+import { Plane, Lock, Clock, ShieldCheck, Check, Download, Monitor, X, Palette, Sun, Moon, Eye } from 'lucide-react';
+import { SystemConfig, ThemeMode } from '../types';
 import { soundFX } from '../services/soundService';
 
 interface HeaderProps {
   currentStep: number;
   config: SystemConfig;
   isAdminUnlocked: boolean;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
   onOpenAdminPin: () => void;
   onNavigateHome: () => void;
 }
@@ -15,6 +17,8 @@ export const Header: React.FC<HeaderProps> = ({
   currentStep,
   config,
   isAdminUnlocked,
+  themeMode,
+  onToggleTheme,
   onOpenAdminPin,
   onNavigateHome,
 }) => {
@@ -78,14 +82,40 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="font-extrabold text-base sm:text-lg text-white tracking-wider flex items-center gap-2">
-              VUELOSEGURO <span className="bg-emerald-900/80 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded text-xs font-mono">POS 9.8 ✈️</span>
+              VUELOSEGURO <span className="bg-emerald-900/80 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded text-xs font-mono">POS 9.9 ✈️</span>
             </h1>
             <p className="text-slate-400 text-[11px] hidden sm:block">Estación Fisiológica Pre-Vuelo Militar</p>
           </div>
         </div>
 
-        {/* Status Indicators */}
-        <div className="flex items-center gap-3">
+        {/* Status Indicators & Controls */}
+        <div className="flex items-center gap-2.5">
+          
+          {/* Tactical Theme Toggle Button */}
+          <button
+            onClick={() => {
+              soundFX.playTap();
+              onToggleTheme();
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-black transition-all active:scale-95 cursor-pointer shadow-md ${
+              themeMode === 'DAY'
+                ? 'bg-amber-100 border-amber-400 text-amber-900 hover:bg-amber-200'
+                : themeMode === 'STEALTH'
+                  ? 'bg-rose-950 border-rose-600 text-rose-300 hover:bg-rose-900'
+                  : 'bg-slate-950/90 border-emerald-600 text-emerald-400 hover:bg-slate-800'
+            }`}
+            title="Cambiar tema visual (Noche / Día Sol / Visión Nocturna)"
+          >
+            {themeMode === 'CYBER' && <Moon size={15} className="text-emerald-400" />}
+            {themeMode === 'DAY' && <Sun size={15} className="text-amber-600" />}
+            {themeMode === 'STEALTH' && <Eye size={15} className="text-rose-400" />}
+            <span className="font-mono">
+              {themeMode === 'CYBER' && '🎨 CYBER'}
+              {themeMode === 'DAY' && '☀️ DÍA SOL'}
+              {themeMode === 'STEALTH' && '🔴 STEALTH'}
+            </span>
+          </button>
+
           {/* Always Visible Desktop PWA Install Button */}
           <button
             onClick={handleInstallClick}
@@ -93,11 +123,11 @@ export const Header: React.FC<HeaderProps> = ({
             title="Instalar VueloSeguro POS en el escritorio de Windows"
           >
             <Download size={15} />
-            <span>Instalar App 💻</span>
+            <span className="hidden sm:inline">Instalar App 💻</span>
           </button>
 
           {/* Station ID */}
-          <div className="hidden sm:flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-slate-400 text-xs">
+          <div className="hidden md:flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-slate-400 text-xs">
             <ShieldCheck size={14} className="text-blue-400" />
             <span>{config.stationId}</span>
           </div>
@@ -122,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Acceso restringido Administrador (PIN: 1234)"
           >
             <Lock size={15} className={isAdminUnlocked ? 'text-amber-400' : 'text-slate-500'} />
-            <span className="hidden md:inline">{isAdminUnlocked ? 'Admin Bloquear' : 'Admin PIN'}</span>
+            <span className="hidden lg:inline">{isAdminUnlocked ? 'Admin Bloquear' : 'Admin PIN'}</span>
           </button>
         </div>
       </div>

@@ -14,6 +14,8 @@ export type MilitaryRank =
 
 export type AssessmentStatus = 'APTO' | 'OBSERVACION' | 'NO_APTO';
 
+export type ThemeMode = 'CYBER' | 'DAY' | 'STEALTH';
+
 export interface MilitaryPersonnel {
   nombres: string;
   apellidos: string;

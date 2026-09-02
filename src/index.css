@@ -16,6 +16,80 @@ body {
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==================== THEME ENGINE OVERRIDES ==================== */
+/* DAY LIGHT MODE (Modo Día - Alto Contraste Solar) */
+body.theme-day {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+body.theme-day .bg-slate-950,
+body.theme-day .bg-slate-900 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-day .bg-slate-950\/90,
+body.theme-day .bg-slate-900\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+}
+
+body.theme-day .bg-slate-800 {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+body.theme-day .text-white {
+  color: #0f172a !important;
+}
+
+body.theme-day .text-slate-300,
+body.theme-day .text-slate-400 {
+  color: #334155 !important;
+}
+
+body.theme-day .border-slate-800,
+body.theme-day .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
+
+/* STEALTH NIGHT VISION MODE (Modo Nocturno Táctico Militar Rojo) */
+body.theme-stealth {
+  background: #000000 !important;
+  color: #fca5a5 !important;
+  color-scheme: dark;
+}
+
+body.theme-stealth .bg-slate-950,
+body.theme-stealth .bg-slate-900,
+body.theme-stealth .bg-slate-800 {
+  background-color: #090000 !important;
+  color: #fca5a5 !important;
+  border-color: #7f1d1d !important;
+}
+
+body.theme-stealth .text-white,
+body.theme-stealth .text-slate-200,
+body.theme-stealth .text-slate-300 {
+  color: #fef2f2 !important;
+}
+
+body.theme-stealth .text-emerald-400,
+body.theme-stealth .text-emerald-500 {
+  color: #f87171 !important;
+}
+
+body.theme-stealth .bg-emerald-600,
+body.theme-stealth .bg-emerald-500 {
+  background-color: #dc2626 !important;
+  border-color: #ef4444 !important;
 }
 
 /* Touch friendly custom scrollbars */
@@ -56,53 +130,6 @@ body {
 }
 .touch-icon-btn:active {
   transform: scale(0.92);
-}
-
-/* Integrated Touch Keyboard Styles */
-.touch-keyboard-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  z-index: 999;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-}
-
-.touch-keyboard-card {
-  width: 100%;
-  max-width: 900px;
-  background: #0f172a;
-  border: 2px solid #334155;
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-}
-
-.touch-keyboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.touch-keyboard-display {
-  margin-bottom: 16px;
-}
-
-.touch-key {
-  height: 56px;
-  min-width: 50px;
-  padding: 0 16px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 /* ESC/POS Thermal Print Styles */

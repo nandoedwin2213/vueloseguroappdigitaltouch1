@@ -39,6 +39,32 @@ export const App: React.FC = () => {
   const [draftReaction, setDraftReaction] = useState<ReactionMetrics | null>(null);
   const [completedRecord, setCompletedRecord] = useState<PreFlightCheckupRecord | null>(null);
 
+  // Theme Engine State: 'CYBER' | 'DAY' | 'STEALTH'
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    return (localStorage.getItem('vueloseguro_theme_v1') as ThemeMode) || 'CYBER';
+  });
+
+  React.useEffect(() => {
+    document.body.classList.remove('theme-cyber', 'theme-day', 'theme-stealth');
+    if (themeMode === 'DAY') {
+      document.body.classList.add('theme-day');
+    } else if (themeMode === 'STEALTH') {
+      document.body.classList.add('theme-stealth');
+    } else {
+      document.body.classList.add('theme-cyber');
+    }
+    localStorage.setItem('vueloseguro_theme_v1', themeMode);
+  }, [themeMode]);
+
+  const handleToggleTheme = () => {
+    soundFX.playTap();
+    setThemeMode((prev) => {
+      if (prev === 'CYBER') return 'DAY';
+      if (prev === 'DAY') return 'STEALTH';
+      return 'CYBER';
+    });
+  };
+
   const handleUpdateConfig = (newConfig: SystemConfig) => {
     saveConfig(newConfig);
     setConfigState(newConfig);
@@ -190,6 +216,8 @@ export const App: React.FC = () => {
         currentStep={currentStepNum}
         config={config}
         isAdminUnlocked={isAdminUnlocked}
+        themeMode={themeMode}
+        onToggleTheme={handleToggleTheme}
         onOpenAdminPin={handleOpenAdminPin}
         onNavigateHome={() => setView('DASHBOARD')}
       />
