@@ -1,8 +1,9 @@
-import { PreFlightCheckupRecord, SystemConfig } from '../types';
+import { MilitaryPersonnel, PreFlightCheckupRecord, SystemConfig } from '../types';
 import { uploadRecordToNeon } from './neonService';
 
 const STORAGE_KEY_RECORDS = 'vueloseguro_records_v2';
 const STORAGE_KEY_CONFIG = 'vueloseguro_config_v2';
+const STORAGE_KEY_REGISTERED_PERSONNEL = 'vueloseguro_registered_personnel_v1';
 
 export const DEFAULT_CONFIG: SystemConfig = {
   stationId: 'DEA/MEDICINA DE AVIACION',
@@ -20,7 +21,64 @@ export const DEFAULT_CONFIG: SystemConfig = {
   randomAlcoholAuditPercent: 1, // 1% probability (1 out of 100 checkups - max 1-2 per day)
 };
 
-// Seed initial mock records with Vital Signs
+// Base de Datos Oficial de Pilotos y Cadetes de la ESMA (Escuela Superior Militar de Aviación)
+export const DEFAULT_ESMA_PERSONNEL: MilitaryPersonnel[] = [
+  { nombres: 'Santiago', apellidos: 'Galarza', grado: 'Coronel', edad: 45, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Luis N.', apellidos: 'Méndez', grado: 'Coronel', edad: 47, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Carlos', apellidos: 'Altamirano', grado: 'Teniente Coronel', edad: 42, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Jorge CH.', apellidos: 'Salazar', grado: 'Teniente Coronel', edad: 41, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Ochoa', apellidos: 'Pérez', grado: 'Teniente Coronel', edad: 40, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Tamayo', apellidos: 'Moncayo', grado: 'Teniente Coronel', edad: 43, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Edwin', apellidos: 'Ayala', grado: 'Mayor', edad: 38, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón Medicina de Aviación' },
+  { nombres: 'Gonzalo', apellidos: 'Benítez', grado: 'Mayor', edad: 39, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Vladimir', apellidos: 'Freire', grado: 'Mayor', edad: 37, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Guillermo', apellidos: 'Navarrete', grado: 'Mayor', edad: 38, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Edgar', apellidos: 'Asqui', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Bermeo', apellidos: 'Salazar', grado: 'Capitán', edad: 32, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Canales', apellidos: 'Suárez', grado: 'Capitán', edad: 34, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Walter', apellidos: 'Castillo', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Changuan', apellidos: 'Morales', grado: 'Capitán', edad: 31, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Shuberth', apellidos: 'Espinosa', grado: 'Capitán', edad: 35, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Francisco R.', apellidos: 'Estrella', grado: 'Capitán', edad: 34, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Edison', apellidos: 'González', grado: 'Capitán', edad: 32, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Paola', apellidos: 'Gualoto', grado: 'Capitán', edad: 30, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Juan', apellidos: 'Negrete', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Eduardo', apellidos: 'Novillo', grado: 'Capitán', edad: 34, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'David', apellidos: 'Reyes', grado: 'Capitán', edad: 32, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Rivadeneira', apellidos: 'Ortiz', grado: 'Capitán', edad: 31, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Elvis', apellidos: 'Rodríguez', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Pedro', apellidos: 'Rodríguez', grado: 'Capitán', edad: 35, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Marcia', apellidos: 'Santamaría', grado: 'Capitán', edad: 31, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Kennedy', apellidos: 'Tamayo', grado: 'Capitán', edad: 32, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Tigselema', apellidos: 'Guamán', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Stephanie', apellidos: 'Torres', grado: 'Capitán', edad: 30, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Ignacio', apellidos: 'Tuatez', grado: 'Capitán', edad: 34, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Mario', apellidos: 'Vásquez', grado: 'Capitán', edad: 33, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Vera', apellidos: 'Mendoza', grado: 'Capitán', edad: 32, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Acuña', apellidos: 'Torres', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Luis T.', apellidos: 'Aldás', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Anaguano', apellidos: 'López', grado: 'Teniente', edad: 29, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Marlon', apellidos: 'Arcentales', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Santiago', apellidos: 'Castro', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Clavijo', apellidos: 'Salazar', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Christian A.', apellidos: 'Coral', grado: 'Teniente', edad: 29, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Antony', apellidos: 'España', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'García', apellidos: 'Mendoza', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Iglesias', apellidos: 'Pérez', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Martínez Cueva', apellidos: 'Sánchez', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Bryan', apellidos: 'Moreira', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Jimmy', apellidos: 'Orozco', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Ortiz', apellidos: 'Zambrano', grado: 'Teniente', edad: 27, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Israel', apellidos: 'Pacheco', grado: 'Teniente', edad: 28, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Allison', apellidos: 'Albuja', grado: 'Subteniente', edad: 25, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Alex', apellidos: 'Allauca', grado: 'Subteniente', edad: 24, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Víctor', apellidos: 'Hermosa', grado: 'Subteniente', edad: 25, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Marcelo', apellidos: 'Pico', grado: 'Subteniente', edad: 24, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Vuelo ESMA' },
+  { nombres: 'Kdt. Jaramillo', apellidos: 'Vaca', grado: 'Cadete', edad: 21, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Cadetes ESMA' },
+  { nombres: 'Kdt. Naranjo', apellidos: 'García', grado: 'Cadete', edad: 22, reparto: 'ESMA - Escuela Superior Militar de Aviación', escuadron: 'Escuadrón de Cadetes ESMA' },
+];
+
+// Seed initial mock records
 const SEED_RECORDS: PreFlightCheckupRecord[] = [
   {
     id: 'VS-20260902-0001',
@@ -30,13 +88,12 @@ const SEED_RECORDS: PreFlightCheckupRecord[] = [
     operatorName: 'MAYOR EDWIN AYALA MEDICO AEROESPACIAL',
     stationId: 'DEA/MEDICINA DE AVIACION',
     personnel: {
-      nombres: 'Roberto Carlos',
-      apellidos: 'Alvarado Benítez',
-      grado: 'Mayor',
-      edad: 34,
-      reparto: 'Ala de Combate N° 22',
-      escuadron: 'Escuadrón 2112',
-      dniOrId: 'CAD-9921',
+      nombres: 'Santiago',
+      apellidos: 'Galarza',
+      grado: 'Coronel',
+      edad: 45,
+      reparto: 'ESMA - Escuela Superior Militar de Aviación',
+      escuadron: 'Escuadrón de Vuelo ESMA',
     },
     vitalSigns: {
       sistolica: 118,
@@ -77,75 +134,13 @@ const SEED_RECORDS: PreFlightCheckupRecord[] = [
     cloudSyncStatus: 'SYNCED',
     syncedAt: Date.now() - 3500000,
   },
-  {
-    id: 'VS-20260902-0002',
-    timestamp: Date.now() - 3600000 * 1,
-    formattedDate: new Date(Date.now() - 3600000 * 1).toLocaleDateString('es-ES'),
-    formattedTime: new Date(Date.now() - 3600000 * 1).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-    operatorName: 'MAYOR EDWIN AYALA MEDICO AEROESPACIAL',
-    stationId: 'DEA/MEDICINA DE AVIACION',
-    personnel: {
-      nombres: 'Esteban Andrés',
-      apellidos: 'Vargas Silva',
-      grado: 'Cadete',
-      edad: 21,
-      reparto: 'Escuela Superior de Aviación',
-      escuadron: 'Escuadrón Cadetes N° 3',
-      dniOrId: 'CAD-4412',
-    },
-    vitalSigns: {
-      sistolica: 132,
-      diastolica: 86,
-      frecuenciaCardiaca: 84,
-      bpStatus: 'ELEVADA',
-      hrStatus: 'NORMAL',
-    },
-    imSafe: {
-      illness: 'APTO',
-      medication: 'APTO',
-      stress: 'APTO',
-      alcohol: 'APTO',
-      fatigue: 'APTO',
-      emotionEating: 'APTO',
-      overallStatus: 'APTO',
-    },
-    reaction: {
-      trials: [
-        { trialIndex: 1, delayMs: 2000, reactionTimeMs: 290, isAnticipated: false, isCorrect: true, timestamp: Date.now() },
-        { trialIndex: 2, delayMs: 2700, reactionTimeMs: 310, isAnticipated: false, isCorrect: true, timestamp: Date.now() },
-        { trialIndex: 3, delayMs: 3500, reactionTimeMs: 305, isAnticipated: false, isCorrect: true, timestamp: Date.now() },
-        { trialIndex: 4, delayMs: 2200, reactionTimeMs: 285, isAnticipated: false, isCorrect: true, timestamp: Date.now() },
-        { trialIndex: 5, delayMs: 4100, reactionTimeMs: 295, isAnticipated: false, isCorrect: true, timestamp: Date.now() },
-      ],
-      totalTrials: 5,
-      minMs: 285,
-      maxMs: 310,
-      avgMs: 297,
-      medianMs: 295,
-      correctCount: 5,
-      incorrectCount: 0,
-      anticipatedCount: 0,
-      evaluationStatus: 'OBSERVACION',
-    },
-    finalResult: 'OBSERVACION',
-    observationsList: ['Presión Arterial Elevada (132/86 mmHg)', 'Tiempo de Reacción Elevado (297 ms)'],
-    cloudSyncStatus: 'SYNCED',
-    syncedAt: Date.now() - 3200000,
-  },
 ];
 
 export function getConfig(): SystemConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
     if (!raw) return DEFAULT_CONFIG;
-    // Always enforce institutional defaults for stationId and operatorName
-    const parsed = JSON.parse(raw);
-    return {
-      ...DEFAULT_CONFIG,
-      ...parsed,
-      stationId: 'DEA/MEDICINA DE AVIACION',
-      operatorName: 'MAYOR EDWIN AYALA MEDICO AEROESPACIAL',
-    };
+    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
   } catch (e) {
     return DEFAULT_CONFIG;
   }
@@ -172,11 +167,58 @@ export function getRecords(): PreFlightCheckupRecord[] {
   }
 }
 
+// Registered personnel database functions for 1-tap auto-complete lookup
+export function getRegisteredPersonnel(): MilitaryPersonnel[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_REGISTERED_PERSONNEL);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY_REGISTERED_PERSONNEL, JSON.stringify(DEFAULT_ESMA_PERSONNEL));
+      return DEFAULT_ESMA_PERSONNEL;
+    }
+    const stored: MilitaryPersonnel[] = JSON.parse(raw);
+    
+    // Merge stored personnel with DEFAULT_ESMA_PERSONNEL to guarantee ESMA roster is always available
+    const existingKeys = new Set(stored.map(p => `${p.nombres.toLowerCase()}_${p.apellidos.toLowerCase()}`));
+    const merged = [...stored];
+    for (const p of DEFAULT_ESMA_PERSONNEL) {
+      const key = `${p.nombres.toLowerCase()}_${p.apellidos.toLowerCase()}`;
+      if (!existingKeys.has(key)) {
+        merged.push(p);
+      }
+    }
+    return merged;
+  } catch (e) {
+    return DEFAULT_ESMA_PERSONNEL;
+  }
+}
+
+export function saveRegisteredPersonnel(person: MilitaryPersonnel): void {
+  try {
+    const list = getRegisteredPersonnel();
+    const key = `${person.nombres.trim().toLowerCase()}_${person.apellidos.trim().toLowerCase()}`;
+    const exists = list.some(p => `${p.nombres.trim().toLowerCase()}_${p.apellidos.trim().toLowerCase()}` === key);
+    
+    if (!exists) {
+      const updated = [person, ...list];
+      localStorage.setItem(STORAGE_KEY_REGISTERED_PERSONNEL, JSON.stringify(updated));
+      console.log(`👤 New military personnel registered & saved to catalog: ${person.nombres} ${person.apellidos}`);
+    }
+  } catch (e) {
+    console.error('Error saving registered personnel:', e);
+  }
+}
+
 export function saveRecord(record: PreFlightCheckupRecord): void {
   try {
+    // Auto-save military personnel to catalog if not present!
+    if (record.personnel) {
+      saveRegisteredPersonnel(record.personnel);
+    }
+
     const records = getRecords();
     const updated = [record, ...records];
     localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(updated));
+    
     // Asynchronously sync new record to Neon Postgres
     uploadRecordToNeon(record).then((success) => {
       if (success) {

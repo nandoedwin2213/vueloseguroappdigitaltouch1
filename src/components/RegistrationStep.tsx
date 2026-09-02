@@ -3,6 +3,7 @@ import { MilitaryPersonnel, MilitaryRank, PreFlightCheckupRecord } from '../type
 import { User, Shield, Building2, Users, Calendar, ArrowRight, Keyboard, ChevronDown, Check, Search, X, UserCheck } from 'lucide-react';
 import { TouchKeyboard } from './TouchKeyboard';
 import { soundFX } from '../services/soundService';
+import { getRegisteredPersonnel } from '../services/storageService';
 
 interface RegistrationStepProps {
   initialData?: Partial<MilitaryPersonnel>;
@@ -148,9 +149,12 @@ export const RegistrationStep: React.FC<RegistrationStepProps> = ({
   // Touch keyboard popup control
   const [activeKeyboardField, setActiveKeyboardField] = useState<'nombres' | 'apellidos' | 'reparto' | 'escuadron' | null>(null);
 
-  // Extract unique previously registered personnel
+  // Extract unique previously registered personnel & pre-loaded ESMA catalog
+  const catalogPersonnel = getRegisteredPersonnel();
+  const recordPersonnel = records ? records.map(r => r.personnel) : [];
+  
   const uniqueRegisteredPersonnel: MilitaryPersonnel[] = Array.from(
-    new Map(records.map(r => [`${r.personnel.nombres.toLowerCase()}-${r.personnel.apellidos.toLowerCase()}`, r.personnel])).values()
+    new Map([...catalogPersonnel, ...recordPersonnel].map(p => [`${p.nombres.toLowerCase().trim()}-${p.apellidos.toLowerCase().trim()}`, p])).values()
   );
 
   const filteredLookupPersonnel = uniqueRegisteredPersonnel.filter(p => {
