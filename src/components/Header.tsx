@@ -202,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-xs shrink-0">2</span>
-                  <span>Selecciona <strong>"Guardar y compartir"</strong> o <strong>"Instalar VueloSeguro POS..."</strong>.</span>
+                  <span>Selecciona <strong>"Transmitir, guardar y compartir"</strong> ➔ <strong>"Instalar VueloSeguro POS..."</strong> (o <em>"Crear acceso directo"</em>).</span>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-xs shrink-0">3</span>
