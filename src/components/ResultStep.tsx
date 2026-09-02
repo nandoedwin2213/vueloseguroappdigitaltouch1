@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PreFlightCheckupRecord } from '../types';
-import { Award, AlertTriangle, XCircle, Home, CheckCircle2, Shield, HeartPulse, Zap, Info, RotateCcw, Clock, ShieldAlert, Radio } from 'lucide-react';
+import { Award, AlertTriangle, XCircle, Home, CheckCircle2, Shield, HeartPulse, Zap, Info, RotateCcw, Clock, ShieldAlert, Radio, Printer, Pause } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ThermalTicket } from './ThermalTicket';
 import { soundFX } from '../services/soundService';
@@ -18,16 +18,26 @@ export const ResultStep: React.FC<ResultStepProps> = ({
 }) => {
   const isApto = record.finalResult === 'APTO';
   const isObs = record.finalResult === 'OBSERVACION';
+  const isAudited = !!record.isRandomAlcoholAudited;
 
-  // 20-Second Auto-Reset Countdown Timer for Pilot Kiosk
-  const [countdown, setCountdown] = useState<number>(20);
+  // Track if ticket has been printed by user
+  const [hasPrintedTicket, setHasPrintedTicket] = useState<boolean>(false);
+  const [isTimerPaused, setIsTimerPaused] = useState<boolean>(isAudited || !isApto);
+
+  // 60-Second Auto-Reset Countdown Timer for Pilot Kiosk
+  const [countdown, setCountdown] = useState<number>(60);
 
   // Radar scanning state for Random Alcohol Audit Lottery
   const [isScanningAudit, setIsScanningAudit] = useState<boolean>(true);
 
+  const handlePrint = () => {
+    soundFX.playTap();
+    setHasPrintedTicket(true);
+  };
+
   useEffect(() => {
     // Sound FX & Confetti trigger
-    if (isApto) {
+    if (isApto && !isAudited) {
       soundFX.playSuccess();
       try {
         confetti({
@@ -43,13 +53,15 @@ export const ResultStep: React.FC<ResultStepProps> = ({
     // Simulate 2.2s Radar Scan for Random Alcohol Audit
     const scanTimer = setTimeout(() => {
       setIsScanningAudit(false);
-      if (record.isRandomAlcoholAudited) {
+      if (isAudited) {
         soundFX.playWarning();
       }
     }, 2200);
 
-    // Start auto-reset timer
+    // Auto-reset timer ONLY runs if timer is not paused AND (ticket has been printed OR normal apto checkup)
     const interval = setInterval(() => {
+      if (isTimerPaused) return;
+
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
@@ -64,30 +76,58 @@ export const ResultStep: React.FC<ResultStepProps> = ({
       clearTimeout(scanTimer);
       clearInterval(interval);
     };
-  }, [isApto, onGoHome, record.isRandomAlcoholAudited]);
+  }, [isApto, isAudited, isTimerPaused, onGoHome]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 select-none">
-      {/* Auto-Reset Countdown Alert Banner for Pilot Kiosk */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-2 border-emerald-500/80 p-4 rounded-2xl shadow-xl flex items-center justify-between flex-wrap gap-3">
+      {/* Kiosk Status & Timer Control Banner */}
+      <div className="bg-slate-900 border-2 border-emerald-500/80 p-4 rounded-2xl shadow-xl flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-950 border border-emerald-700 text-emerald-400 rounded-xl animate-pulse">
-            <Clock size={20} />
+          <div className={`p-2 rounded-xl border ${isTimerPaused ? 'bg-amber-950 border-amber-700 text-amber-400' : 'bg-emerald-950 border-emerald-700 text-emerald-400 animate-pulse'}`}>
+            {isTimerPaused ? <Pause size={20} /> : <Clock size={20} />}
           </div>
           <div>
-            <div className="text-xs font-bold text-emerald-400 uppercase">Siguiente Piloto / Cadete</div>
+            <div className="text-xs font-black uppercase text-emerald-400">
+              {hasPrintedTicket ? '✓ Ticket Impreso Exitosamente' : '🖨️ Impresión de Ticket Requerida'}
+            </div>
             <div className="text-sm font-extrabold text-white">
-              El kiosko se reiniciará automáticamente en <span className="font-mono text-emerald-400 text-base font-black">{countdown}s</span>
+              {isTimerPaused ? (
+                <span className="text-amber-400 font-bold">
+                  🔒 Temporizador pausado para lectura e impresión.
+                </span>
+              ) : (
+                <span>
+                  El kiosko se reiniciará en <span className="font-mono text-emerald-400 text-base font-black">{countdown}s</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        <button
-          onClick={onGoHome}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-        >
-          <RotateCcw size={16} /> Finalizar y Listo 🚀
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Pause / Resume Timer Button */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playTap();
+              setIsTimerPaused(!isTimerPaused);
+            }}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer border border-slate-700"
+          >
+            {isTimerPaused ? <Clock size={16} className="text-emerald-400" /> : <Pause size={16} className="text-amber-400" />}
+            <span>{isTimerPaused ? 'Reanudar Tiempo' : 'Pausar Tiempo'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              soundFX.playTap();
+              onGoHome();
+            }}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <RotateCcw size={16} /> Finalizar y Listo 🚀
+          </button>
+        </div>
       </div>
 
       {/* RANDOM ALCOHOL AUDIT RADAR SCANNER BANNER (Deterrent Feature) */}
@@ -104,7 +144,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
               </h3>
             </div>
           </div>
-        ) : record.isRandomAlcoholAudited ? (
+        ) : isAudited ? (
           /* PILOT SELECTED FOR RANDOM ALCOHOL TEST! */
           <div className="bg-gradient-to-r from-rose-950 via-rose-900 to-rose-950 border-2 border-rose-500 p-5 rounded-2xl text-white space-y-2 shadow-2xl animate-pulse">
             <div className="flex items-center gap-3">
@@ -121,7 +161,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
               </div>
             </div>
             <p className="text-sm font-semibold text-rose-100 pl-1">
-              Ha sido seleccionado por el algoritmo aleatorio para examen de alcoholemia en aliento y valoración presencial con el <strong className="text-white underline">MAYOR EDWIN AYALA (MÉDICO AEROESPACIAL)</strong> en la estación <strong className="text-white">DEA/MEDICINA DE AVIACIÓN</strong>.
+              Ha sido seleccionado por el algoritmo aleatorio para examen de alcoholemia en aliento y valoración presencial con el <strong className="text-white underline">MAYOR EDWIN AYALA (MÉDICO AEROESPACIAL)</strong> en la estación <strong className="text-white">DEA/MEDICINA DE AVIACIÓN</strong>. Imprima su comprobante a continuación.
             </p>
           </div>
         ) : (
@@ -286,7 +326,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
       {/* Ticket Preview & POS Action Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {/* Ticket Preview */}
-        <ThermalTicket record={record} />
+        <ThermalTicket record={record} onPrint={handlePrint} />
 
         {/* POS Next Flow Controls */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">
