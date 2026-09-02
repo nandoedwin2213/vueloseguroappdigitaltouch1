@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Lock, Clock, ShieldCheck, Check } from 'lucide-react';
+import { Plane, Lock, Clock, ShieldCheck, Check, Download } from 'lucide-react';
 import { SystemConfig } from '../types';
+import { soundFX } from '../services/soundService';
 
 interface HeaderProps {
   currentStep: number;
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     const updateClock = () => {
@@ -26,8 +28,30 @@ export const Header: React.FC<HeaderProps> = ({
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
-    return () => clearInterval(interval);
+
+    // Listen for PWA Install Prompt
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallPWA = async () => {
+    soundFX.playTap();
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const steps = [
     { num: 1, label: 'DATOS 🪪' },
@@ -49,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="font-extrabold text-base sm:text-lg text-white tracking-wider flex items-center gap-2">
-              VUELOSEGURO <span className="bg-emerald-900/80 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded text-xs font-mono">POS 9.0 ✈️</span>
+              VUELOSEGURO <span className="bg-emerald-900/80 text-emerald-400 border border-emerald-700 px-2 py-0.5 rounded text-xs font-mono">POS 9.7 ✈️</span>
             </h1>
             <p className="text-slate-400 text-[11px] hidden sm:block">Estación Fisiológica Pre-Vuelo Militar</p>
           </div>
@@ -57,6 +81,18 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Status Indicators */}
         <div className="flex items-center gap-3">
+          {/* PWA Install Button (If PWA prompt available) */}
+          {deferredPrompt && (
+            <button
+              onClick={handleInstallPWA}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white border border-emerald-400 text-xs font-black shadow-lg shadow-emerald-950 animate-pulse active:scale-95 transition-all cursor-pointer"
+              title="Instalar VueloSeguro POS en el escritorio"
+            >
+              <Download size={15} />
+              <span>Instalar App 💻</span>
+            </button>
+          )}
+
           {/* Station ID */}
           <div className="hidden sm:flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-slate-400 text-xs">
             <ShieldCheck size={14} className="text-blue-400" />
@@ -71,8 +107,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Discreet Admin Lock Button (PIN required) */}
           <button
-            onClick={onOpenAdminPin}
-            className={`touch-icon-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+            onClick={() => {
+              soundFX.playTap();
+              onOpenAdminPin();
+            }}
+            className={`touch-icon-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 cursor-pointer ${
               isAdminUnlocked
                 ? 'bg-amber-950/80 border-amber-600 text-amber-300 hover:bg-amber-900'
                 : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -85,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* POS Touch Step Navigation Progress Bar (Visible only when in active checkup) */}
+      {/* POS Touch Step Navigation Progress Bar */}
       {currentStep > 0 && (
         <div className="bg-slate-950/90 border-t border-slate-800/80 px-3 py-2.5 backdrop-blur-md">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">

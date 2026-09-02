@@ -280,8 +280,16 @@ export const RegistrationStep: React.FC<RegistrationStepProps> = ({
                   required
                   value={nombres}
                   onChange={(e) => setNombres(e.target.value)}
+                  onClick={() => {
+                    soundFX.playTap();
+                    setActiveKeyboardField('nombres');
+                  }}
+                  onFocus={() => {
+                    soundFX.playTap();
+                    setActiveKeyboardField('nombres');
+                  }}
                   placeholder="Ej. Carlos Eduardo"
-                  className="w-full bg-slate-950 border-2 border-slate-700 focus:border-emerald-500 text-white font-semibold text-lg p-3.5 pl-4 pr-12 rounded-xl focus:outline-none transition-all"
+                  className="w-full bg-slate-950 border-2 border-slate-700 focus:border-emerald-500 text-white font-semibold text-lg p-3.5 pl-4 pr-12 rounded-xl focus:outline-none transition-all cursor-pointer"
                 />
                 <button
                   type="button"
@@ -308,8 +316,16 @@ export const RegistrationStep: React.FC<RegistrationStepProps> = ({
                   required
                   value={apellidos}
                   onChange={(e) => setApellidos(e.target.value)}
+                  onClick={() => {
+                    soundFX.playTap();
+                    setActiveKeyboardField('apellidos');
+                  }}
+                  onFocus={() => {
+                    soundFX.playTap();
+                    setActiveKeyboardField('apellidos');
+                  }}
                   placeholder="Ej. Mendoza Ruiz"
-                  className="w-full bg-slate-950 border-2 border-slate-700 focus:border-emerald-500 text-white font-semibold text-lg p-3.5 pl-4 pr-12 rounded-xl focus:outline-none transition-all"
+                  className="w-full bg-slate-950 border-2 border-slate-700 focus:border-emerald-500 text-white font-semibold text-lg p-3.5 pl-4 pr-12 rounded-xl focus:outline-none transition-all cursor-pointer"
                 />
                 <button
                   type="button"

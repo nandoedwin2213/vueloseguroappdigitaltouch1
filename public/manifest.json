@@ -1,0 +1,18 @@
+{
+  "short_name": "VueloSeguro POS",
+  "name": "VueloSeguro POS — Sistema de Chequeo Pre-Vuelo Militar",
+  "description": "Estación de chequeo pre-vuelo fisiológico IM SAFE, signos vitales y reflejos cerebro-mano para la Fuerza Aérea.",
+  "icons": [
+    {
+      "src": "/neural_brain.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "display": "standalone",
+  "orientation": "any"
+}
