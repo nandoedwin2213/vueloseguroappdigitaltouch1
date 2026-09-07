@@ -40,7 +40,7 @@ const FAE_REPARTOS: RepartoOption[] = [
     name: 'Escuela Superior de Aviación "Cosme Rennella" (ESMA)',
     location: 'Salinas',
     squadrons: [
-      'Escuadrón "Halcones" (Aeronaves DA-20 Katana)',
+      'Escuadrón "Escorpiones" (Aeronaves DA-20 Katana)',
       'Escuadrón "Linces" (Aeronaves Grob G-120TP)',
       'Escuadrón Cadetes / Vuelo Inicial',
       'Escuadrón Entrenador Primario',
