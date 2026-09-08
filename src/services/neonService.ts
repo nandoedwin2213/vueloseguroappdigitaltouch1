@@ -26,6 +26,8 @@ export async function initNeonTable(): Promise<boolean> {
         sistolica INT,
         diastolica INT,
         frecuencia_cardiaca INT,
+        horas_sueno INT,
+        sleep_status VARCHAR(30),
         bp_status VARCHAR(30),
         hr_status VARCHAR(30),
         imsafe_status VARCHAR(20) NOT NULL,
@@ -42,12 +44,14 @@ export async function initNeonTable(): Promise<boolean> {
       );
     `;
 
-    // Try adding the column in case the table already existed
+    // Try adding newer columns in case table already existed
     try {
       await sql`ALTER TABLE chequeos_prevuelo ADD COLUMN IF NOT EXISTS is_random_alcohol_audited BOOLEAN DEFAULT FALSE;`;
+      await sql`ALTER TABLE chequeos_prevuelo ADD COLUMN IF NOT EXISTS horas_sueno INT;`;
+      await sql`ALTER TABLE chequeos_prevuelo ADD COLUMN IF NOT EXISTS sleep_status VARCHAR(30);`;
     } catch (e) {}
 
-    console.log('✅ Neon PostgreSQL Table `chequeos_prevuelo` checked/created successfully.');
+    console.log('✅ Neon PostgreSQL Table `chequeos_prevuelo` checked/updated successfully.');
     return true;
   } catch (err) {
     console.error('❌ Error initializing Neon table:', err);
@@ -80,6 +84,8 @@ export async function uploadRecordToNeon(record: PreFlightCheckupRecord): Promis
         sistolica,
         diastolica,
         frecuencia_cardiaca,
+        horas_sueno,
+        sleep_status,
         bp_status,
         hr_status,
         imsafe_status,
@@ -97,32 +103,36 @@ export async function uploadRecordToNeon(record: PreFlightCheckupRecord): Promis
         ${record.timestamp},
         ${record.formattedDate},
         ${record.formattedTime},
-        ${record.personnel.nombres},
-        ${record.personnel.apellidos},
-        ${record.personnel.grado},
-        ${record.personnel.edad},
-        ${record.personnel.reparto},
-        ${record.personnel.escuadron},
+        ${record.personnel?.nombres || ''},
+        ${record.personnel?.apellidos || ''},
+        ${record.personnel?.grado || ''},
+        ${record.personnel?.edad || 0},
+        ${record.personnel?.reparto || ''},
+        ${record.personnel?.escuadron || ''},
         ${record.vitalSigns ? record.vitalSigns.sistolica : null},
         ${record.vitalSigns ? record.vitalSigns.diastolica : null},
         ${record.vitalSigns ? record.vitalSigns.frecuenciaCardiaca : null},
+        ${record.vitalSigns?.horasSueno ?? null},
+        ${record.vitalSigns?.sleepStatus || null},
         ${record.vitalSigns ? record.vitalSigns.bpStatus : 'NORMAL'},
         ${record.vitalSigns ? record.vitalSigns.hrStatus : 'NORMAL'},
-        ${record.imSafe.overallStatus},
-        ${record.reaction.avgMs},
-        ${record.reaction.minMs},
-        ${record.reaction.maxMs},
-        ${record.reaction.medianMs},
+        ${record.imSafe?.overallStatus || 'APTO'},
+        ${record.reaction?.avgMs || 0},
+        ${record.reaction?.minMs || 0},
+        ${record.reaction?.maxMs || 0},
+        ${record.reaction?.medianMs || 0},
         ${record.finalResult},
         ${obsString},
         ${!!record.isRandomAlcoholAudited},
-        ${record.stationId},
-        ${record.operatorName}
+        ${record.stationId || 'DEA/MEDICINA DE AVIACION'},
+        ${record.operatorName || 'MAYOR EDWIN AYALA MEDICO AEROESPACIAL'}
       )
       ON CONFLICT (id) DO UPDATE SET
         dictamen_final = EXCLUDED.dictamen_final,
         observaciones = EXCLUDED.observaciones,
-        is_random_alcohol_audited = EXCLUDED.is_random_alcohol_audited;
+        is_random_alcohol_audited = EXCLUDED.is_random_alcohol_audited,
+        horas_sueno = EXCLUDED.horas_sueno,
+        sleep_status = EXCLUDED.sleep_status;
     `;
     console.log(`☁️ Record ${record.id} uploaded successfully to Neon Postgres!`);
     return true;
