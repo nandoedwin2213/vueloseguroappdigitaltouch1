@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { PreFlightCheckupRecord } from '../types';
+import type { PreFlightCheckupRecord } from '../types/index.ts';
 
 // Neon Database Connection URL provided by the user
 const NEON_DATABASE_URL = 'postgresql://neondb_owner:npg_Cu9Mkdbqy8Hs@ep-empty-mouse-aehm9zc8-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require';

@@ -57,6 +57,15 @@ export const App: React.FC = () => {
     localStorage.setItem('vueloseguro_theme_v1', themeMode);
   }, [themeMode]);
 
+  // Auto-sync any pending records with Neon PostgreSQL Cloud on launch
+  React.useEffect(() => {
+    syncRecordsWithCloud().then(({ syncedCount }) => {
+      if (syncedCount > 0) {
+        setRecordsState(getRecords());
+      }
+    });
+  }, []);
+
   const handleToggleTheme = () => {
     soundFX.playTap();
     setThemeMode((prev) => {

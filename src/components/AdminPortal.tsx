@@ -4,6 +4,7 @@ import { ShieldCheck, History, Settings, FileSpreadsheet, Download, Activity, Cl
 import { HistoryStep } from './HistoryStep';
 import { ConfigStep } from './ConfigStep';
 import { exportRecordsToCSV, exportRecordsToJSON } from '../services/exportService';
+import { syncRecordsWithCloud } from '../services/storageService';
 
 interface AdminPortalProps {
   records: PreFlightCheckupRecord[];
@@ -19,6 +20,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onLockAdmin,
 }) => {
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'HISTORY' | 'CONFIG'>('DASHBOARD');
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await syncRecordsWithCloud();
+      setSyncMessage(`☁️ Sincronización completada: ${res.syncedCount} subidos, ${res.pendingCount} pendientes.`);
+    } catch (e) {
+      setSyncMessage('❌ Error al sincronizar con Neon Postgres.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Compute analytics
   const total = records.length;
@@ -49,15 +65,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
         </div>
 
-        {/* Lock Admin Portal Action */}
-        <button
-          onClick={onLockAdmin}
-          className="px-5 py-3 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-700 rounded-2xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg"
-        >
-          <Lock size={18} />
-          <span>SALIR Y BLOQUEAR KIOSKO 🔒</span>
-        </button>
+        {/* Lock & Cloud Sync Admin Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleManualSync}
+            disabled={isSyncing}
+            className="px-4 py-3 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 rounded-2xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg cursor-pointer disabled:opacity-50"
+          >
+            <Cloud size={18} className={isSyncing ? 'animate-bounce' : ''} />
+            <span>{isSyncing ? 'Sincronizando...' : 'FORZAR SYNC NEON ☁️'}</span>
+          </button>
+
+          <button
+            onClick={onLockAdmin}
+            className="px-5 py-3 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-700 rounded-2xl text-xs font-bold flex items-center gap-2 active:scale-95 transition-all shadow-lg cursor-pointer"
+          >
+            <Lock size={18} />
+            <span>BLOQUEAR KIOSKO 🔒</span>
+          </button>
+        </div>
       </div>
+
+      {syncMessage && (
+        <div className="bg-slate-900 border border-emerald-500/50 p-3.5 rounded-2xl text-xs font-bold text-emerald-400 text-center animate-fade-in">
+          {syncMessage}
+        </div>
+      )}
 
       {/* Admin Tab Navigation */}
       <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-2 rounded-2xl">
