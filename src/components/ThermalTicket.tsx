@@ -156,14 +156,16 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
         </div>
 
         {/* Reaction Metrics */}
-        <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
-          <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== REFLEJO CEREBRO-MANO ⚡ ===</div>
-          <div className="flex justify-between font-black"><strong className="font-black">TIEMPO PROMEDIO:</strong> <span className="font-black text-sm">{record.reaction.avgMs} ms</span></div>
-          <div className="flex justify-between font-black text-[10px]"><strong className="font-black">EVALUACIÓN REFLEJO:</strong> <span className="font-black uppercase">{record.reaction.qualitativeLabel || getReactionInterpretation(record.reaction.avgMs).label}</span></div>
-          <div className="flex justify-between"><strong className="font-black">MEJOR TIEMPO:</strong> <span className="font-black">{record.reaction.minMs} ms</span></div>
-          <div className="flex justify-between"><strong className="font-black">PEOR TIEMPO:</strong> <span className="font-black">{record.reaction.maxMs} ms</span></div>
-          <div className="flex justify-between"><strong className="font-black">ENSAYOS VÁLIDOS:</strong> <span className="font-black">{record.reaction.correctCount} / {record.reaction.totalTrials}</span></div>
-        </div>
+        {record.reaction && (
+          <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
+            <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== REFLEJO CEREBRO-MANO ⚡ ===</div>
+            <div className="flex justify-between font-black"><strong className="font-black">TIEMPO PROMEDIO:</strong> <span className="font-black text-sm">{record.reaction.avgMs || 0} ms</span></div>
+            <div className="flex justify-between font-black text-[10px]"><strong className="font-black">EVALUACIÓN REFLEJO:</strong> <span className="font-black uppercase">{record.reaction.qualitativeLabel || getReactionInterpretation(record.reaction.avgMs || 0).label}</span></div>
+            <div className="flex justify-between"><strong className="font-black">MEJOR TIEMPO:</strong> <span className="font-black">{record.reaction.minMs || 0} ms</span></div>
+            <div className="flex justify-between"><strong className="font-black">PEOR TIEMPO:</strong> <span className="font-black">{record.reaction.maxMs || 0} ms</span></div>
+            <div className="flex justify-between"><strong className="font-black">ENSAYOS VÁLIDOS:</strong> <span className="font-black">{record.reaction.correctCount || 0} / {record.reaction.totalTrials || 5}</span></div>
+          </div>
+        )}
 
         {/* Observations List (if any) */}
         {record.observationsList && record.observationsList.length > 0 && (

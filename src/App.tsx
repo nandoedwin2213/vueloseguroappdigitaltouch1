@@ -271,9 +271,9 @@ export const App: React.FC = () => {
           />
         )}
 
-        {view === 'STEP5' && completedRecord && (
+        {view === 'STEP5' && (completedRecord || records[0]) && (
           <ResultStep
-            record={completedRecord}
+            record={completedRecord || records[0]}
             onNewCheckup={handleStartNewCheckup}
             onGoHome={() => setView('DASHBOARD')}
           />

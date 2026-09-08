@@ -313,25 +313,25 @@ export const ResultStep: React.FC<ResultStepProps> = ({
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Evaluación IM SAFE:</span>
               <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${
-                record.imSafe.overallStatus === 'APTO' ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-rose-950 text-rose-400 border border-rose-700'
+                record.imSafe?.overallStatus === 'APTO' ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-rose-950 text-rose-400 border border-rose-700'
               }`}>
-                {record.imSafe.overallStatus}
+                {record.imSafe?.overallStatus || 'APTO'}
               </span>
             </div>
 
             <div className="flex justify-between py-1 border-b border-slate-800/60 items-center">
               <span className="text-slate-400">Promedio Reflejos:</span>
               <div className="text-right">
-                <span className="font-mono font-bold text-emerald-400 text-sm">{record.reaction.avgMs} ms</span>
-                <div className={`text-[10px] font-bold ${getReactionInterpretation(record.reaction.avgMs).colorClass}`}>
-                  {record.reaction.qualitativeLabel || getReactionInterpretation(record.reaction.avgMs).label}
+                <span className="font-mono font-bold text-emerald-400 text-sm">{record.reaction?.avgMs || 0} ms</span>
+                <div className={`text-[10px] font-bold ${getReactionInterpretation(record.reaction?.avgMs || 0).colorClass}`}>
+                  {record.reaction?.qualitativeLabel || getReactionInterpretation(record.reaction?.avgMs || 0).label}
                 </div>
               </div>
             </div>
 
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Rango Mín / Máx:</span>
-              <span className="font-mono font-bold text-slate-200">{record.reaction.minMs} ms / {record.reaction.maxMs} ms</span>
+              <span className="font-mono font-bold text-slate-200">{record.reaction?.minMs || 0} ms / {record.reaction?.maxMs || 0} ms</span>
             </div>
           </div>
         </div>
