@@ -99,8 +99,10 @@ const SEED_RECORDS: PreFlightCheckupRecord[] = [
       sistolica: 118,
       diastolica: 76,
       frecuenciaCardiaca: 68,
+      horasSueno: 8,
       bpStatus: 'NORMAL',
       hrStatus: 'NORMAL',
+      sleepStatus: 'SUFICIENTE',
     },
     imSafe: {
       illness: 'APTO',

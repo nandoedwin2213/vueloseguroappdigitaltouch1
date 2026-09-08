@@ -30,8 +30,10 @@ export interface VitalSigns {
   sistolica: number;          // mmHg (ej: 120)
   diastolica: number;         // mmHg (ej: 80)
   frecuenciaCardiaca: number; // BPM (ej: 72)
+  horasSueno: number;         // Horas de descanso (mínimo 6h)
   bpStatus: 'NORMAL' | 'ELEVADA' | 'ALTA';
   hrStatus: 'NORMAL' | 'ELEVADA' | 'BAJA';
+  sleepStatus: 'SUFICIENTE' | 'INSUFICIENTE';
   notes?: string;
 }
 

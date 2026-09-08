@@ -280,6 +280,14 @@ export const ResultStep: React.FC<ResultStepProps> = ({
                   {record.vitalSigns.frecuenciaCardiaca} BPM
                 </span>
               </div>
+              {record.vitalSigns.horasSueno !== undefined && (
+                <div className="flex justify-between py-1 border-b border-slate-800/60">
+                  <span className="text-slate-400">Horas de Sueño:</span>
+                  <span className={`font-mono font-bold text-sm ${record.vitalSigns.horasSueno < 6 ? 'text-rose-400 font-black' : 'text-indigo-400'}`}>
+                    {record.vitalSigns.horasSueno} hrs {record.vitalSigns.horasSueno < 6 ? '🔴 (<6h)' : '🟢 (≥6h)'}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between py-1 border-b border-slate-800/60">
                 <span className="text-slate-400">Estado Presión:</span>
                 <span className={`font-bold px-2 py-0.5 rounded text-[11px] ${

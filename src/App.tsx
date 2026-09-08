@@ -130,6 +130,11 @@ export const App: React.FC = () => {
       observationsList.push(`Frecuencia Cardíaca Elevada (${draftVitalSigns.frecuenciaCardiaca} BPM)`);
     }
 
+    // Sleep Hours Observation (Min 6h required)
+    if (draftVitalSigns.horasSueno !== undefined && draftVitalSigns.horasSueno < 6) {
+      observationsList.push(`Sueño Insuficiente (${draftVitalSigns.horasSueno} hrs < 6h mín)`);
+    }
+
     // Reaction Time Observations
     if (reaction.evaluationStatus !== 'APTO') {
       observationsList.push(`Tiempo de Reacción Alterado (${reaction.avgMs} ms)`);

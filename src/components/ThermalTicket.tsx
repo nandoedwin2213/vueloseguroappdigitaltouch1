@@ -126,6 +126,12 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
               <strong className="font-black">FRECUENCIA CARDÍACA:</strong> 
               <span className="font-black text-sm">{record.vitalSigns.frecuenciaCardiaca} BPM</span>
             </div>
+            {record.vitalSigns.horasSueno !== undefined && (
+              <div className="flex justify-between font-black">
+                <strong className="font-black">HORAS DE SUEÑO:</strong> 
+                <span className="font-black text-sm">{record.vitalSigns.horasSueno} HRS ({record.vitalSigns.sleepStatus || (record.vitalSigns.horasSueno >= 6 ? 'SUFICIENTE' : 'INSUFICIENTE')})</span>
+              </div>
+            )}
             <div className="flex justify-between text-xs font-black pt-0.5">
               <strong className="font-black">ESTADO PRESIÓN:</strong> 
               <span className="font-black">{record.vitalSigns.bpStatus}</span>
