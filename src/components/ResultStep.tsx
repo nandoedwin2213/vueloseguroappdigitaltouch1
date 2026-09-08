@@ -240,23 +240,23 @@ export const ResultStep: React.FC<ResultStepProps> = ({
           <div className="space-y-2 text-xs">
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Nombre:</span>
-              <span className="font-bold text-white">{record.personnel.nombres} {record.personnel.apellidos}</span>
+              <span className="font-bold text-white">{record.personnel?.nombres || ''} {record.personnel?.apellidos || ''}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Grado:</span>
-              <span className="font-bold text-emerald-400">{record.personnel.grado}</span>
+              <span className="font-bold text-emerald-400">{record.personnel?.grado || 'N/A'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Edad:</span>
-              <span className="font-bold text-slate-200">{record.personnel.edad} Años</span>
+              <span className="font-bold text-slate-200">{record.personnel?.edad || 0} Años</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Reparto:</span>
-              <span className="font-bold text-slate-200">{record.personnel.reparto}</span>
+              <span className="font-bold text-slate-200">{record.personnel?.reparto || 'ESMA'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-800/60">
               <span className="text-slate-400">Escuadrón:</span>
-              <span className="font-bold text-slate-200">{record.personnel.escuadron}</span>
+              <span className="font-bold text-slate-200">{record.personnel?.escuadron || 'N/A'}</span>
             </div>
           </div>
         </div>

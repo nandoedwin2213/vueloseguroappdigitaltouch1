@@ -108,11 +108,11 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
         {/* Personnel Info */}
         <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
           <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== MILITAR / CADETE ===</div>
-          <div><strong className="font-black">PILOTO:</strong> <span className="font-black">{record.personnel.nombres} {record.personnel.apellidos}</span></div>
-          <div className="flex justify-between"><strong className="font-black">GRADO MILITAR:</strong> <span className="font-black">{record.personnel.grado}</span></div>
-          <div className="flex justify-between"><strong className="font-black">EDAD REGISTRADA:</strong> <span className="font-black">{record.personnel.edad} AÑOS</span></div>
-          <div><strong className="font-black">REPARTO:</strong> <span className="font-black">{record.personnel.reparto}</span></div>
-          <div><strong className="font-black">ESCUADRÓN:</strong> <span className="font-black">{record.personnel.escuadron}</span></div>
+          <div><strong className="font-black">PILOTO:</strong> <span className="font-black">{record.personnel?.nombres || ''} {record.personnel?.apellidos || ''}</span></div>
+          <div className="flex justify-between"><strong className="font-black">GRADO MILITAR:</strong> <span className="font-black">{record.personnel?.grado || 'SIN REGISTRO'}</span></div>
+          <div className="flex justify-between"><strong className="font-black">EDAD REGISTRADA:</strong> <span className="font-black">{record.personnel?.edad || 0} AÑOS</span></div>
+          <div><strong className="font-black">REPARTO:</strong> <span className="font-black">{record.personnel?.reparto || 'ESMA'}</span></div>
+          <div><strong className="font-black">ESCUADRÓN:</strong> <span className="font-black">{record.personnel?.escuadron || 'N/A'}</span></div>
         </div>
 
         {/* Vital Signs Section */}
@@ -141,19 +141,21 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
         )}
 
         {/* IM SAFE Metrics */}
-        <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
-          <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== EVALUACIÓN IM SAFE 📋 ===</div>
-          <div className="flex justify-between"><strong className="font-black">Illness (Enfermedad):</strong> <span className="font-black">{record.imSafe.illness}</span></div>
-          <div className="flex justify-between"><strong className="font-black">Medication (Medicación):</strong> <span className="font-black">{record.imSafe.medication}</span></div>
-          <div className="flex justify-between"><strong className="font-black">Stress (Estrés):</strong> <span className="font-black">{record.imSafe.stress}</span></div>
-          <div className="flex justify-between"><strong className="font-black">Alcohol / Sustancias:</strong> <span className="font-black">{record.imSafe.alcohol}</span></div>
-          <div className="flex justify-between"><strong className="font-black">Fatigue (Fatiga/Sueño):</strong> <span className="font-black">{record.imSafe.fatigue}</span></div>
-          <div className="flex justify-between"><strong className="font-black">Emotion/Eating:</strong> <span className="font-black">{record.imSafe.emotionEating}</span></div>
-          <div className="pt-1 font-black flex justify-between text-xs border-t-2 border-black">
-            <strong className="font-black">DICTAMEN IM SAFE:</strong>
-            <span className="font-black">{record.imSafe.overallStatus}</span>
+        {record.imSafe && (
+          <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
+            <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== EVALUACIÓN IM SAFE 📋 ===</div>
+            <div className="flex justify-between"><strong className="font-black">Illness (Enfermedad):</strong> <span className="font-black">{record.imSafe.illness}</span></div>
+            <div className="flex justify-between"><strong className="font-black">Medication (Medicación):</strong> <span className="font-black">{record.imSafe.medication}</span></div>
+            <div className="flex justify-between"><strong className="font-black">Stress (Estrés):</strong> <span className="font-black">{record.imSafe.stress}</span></div>
+            <div className="flex justify-between"><strong className="font-black">Alcohol / Sustancias:</strong> <span className="font-black">{record.imSafe.alcohol}</span></div>
+            <div className="flex justify-between"><strong className="font-black">Fatigue (Fatiga/Sueño):</strong> <span className="font-black">{record.imSafe.fatigue}</span></div>
+            <div className="flex justify-between"><strong className="font-black">Emotion/Eating:</strong> <span className="font-black">{record.imSafe.emotionEating}</span></div>
+            <div className="pt-1 font-black flex justify-between text-xs border-t-2 border-black">
+              <strong className="font-black">DICTAMEN IM SAFE:</strong>
+              <span className="font-black">{record.imSafe.overallStatus}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Reaction Metrics */}
         {record.reaction && (

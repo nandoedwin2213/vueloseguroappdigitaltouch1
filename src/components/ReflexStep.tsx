@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ReactionMetrics, ReactionTrial, SystemConfig, AssessmentStatus } from '../types';
-import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert, Sparkles } from 'lucide-react';
+import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert, Sparkles, Info } from 'lucide-react';
 import { soundFX } from '../services/soundService';
 import { getReactionInterpretation } from '../services/storageService';
 

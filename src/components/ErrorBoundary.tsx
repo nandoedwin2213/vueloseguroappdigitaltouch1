@@ -32,15 +32,20 @@ export class ErrorBoundary extends Component<Props, State> {
             <AlertTriangle size={36} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-white">Chequeo Registrado Exitosamente</h2>
+            <h2 className="text-2xl font-black text-white">Novedad de Interfaz Detectada</h2>
             <p className="text-xs text-slate-300">
-              El chequeo se ha guardado en la base de datos. Haz clic a continuación para retornar a la pantalla inicial.
+              Se ha detectado una interrupción en el renderizado de la interfaz. Los datos del chequeo se conservan en memoria local. Haz clic para reiniciar el flujo.
             </p>
+            {this.state.error && (
+              <div className="p-3 bg-slate-950 rounded-xl text-rose-400 font-mono text-[11px] text-left overflow-x-auto border border-slate-800">
+                {this.state.error.message}
+              </div>
+            )}
           </div>
           <button
             type="button"
             onClick={() => {
-              this.setState({ hasError: false });
+              this.setState({ hasError: false, error: undefined });
               if (this.props.onReset) {
                 this.props.onReset();
               } else {
