@@ -77,6 +77,7 @@ export interface ReactionMetrics {
   incorrectCount: number;
   anticipatedCount: number;
   evaluationStatus: AssessmentStatus;
+  qualitativeLabel?: string;
 }
 
 export interface PreFlightCheckupRecord {

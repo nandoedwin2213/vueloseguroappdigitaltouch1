@@ -1,5 +1,6 @@
 import React from 'react';
 import { PreFlightCheckupRecord } from '../types';
+import { getReactionInterpretation } from '../services/storageService';
 import { Printer } from 'lucide-react';
 
 interface ThermalTicketProps {
@@ -158,6 +159,7 @@ export const ThermalTicket: React.FC<ThermalTicketProps> = ({ record, onPrint })
         <div className="py-2 space-y-1 text-xs border-b-2 border-dashed border-black text-black font-black">
           <div className="font-black text-xs uppercase text-center tracking-wider pb-1">=== REFLEJO CEREBRO-MANO ⚡ ===</div>
           <div className="flex justify-between font-black"><strong className="font-black">TIEMPO PROMEDIO:</strong> <span className="font-black text-sm">{record.reaction.avgMs} ms</span></div>
+          <div className="flex justify-between font-black text-[10px]"><strong className="font-black">EVALUACIÓN REFLEJO:</strong> <span className="font-black uppercase">{record.reaction.qualitativeLabel || getReactionInterpretation(record.reaction.avgMs).label}</span></div>
           <div className="flex justify-between"><strong className="font-black">MEJOR TIEMPO:</strong> <span className="font-black">{record.reaction.minMs} ms</span></div>
           <div className="flex justify-between"><strong className="font-black">PEOR TIEMPO:</strong> <span className="font-black">{record.reaction.maxMs} ms</span></div>
           <div className="flex justify-between"><strong className="font-black">ENSAYOS VÁLIDOS:</strong> <span className="font-black">{record.reaction.correctCount} / {record.reaction.totalTrials}</span></div>

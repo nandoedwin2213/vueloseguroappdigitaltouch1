@@ -262,3 +262,59 @@ export async function syncRecordsWithCloud(): Promise<{ syncedCount: number; pen
   const pendingCount = records.filter(r => r.cloudSyncStatus === 'PENDING').length;
   return { syncedCount, pendingCount };
 }
+
+export interface ReactionInterpretation {
+  label: string;
+  colorClass: string;
+  badgeBg: string;
+  description: string;
+}
+
+export function getReactionInterpretation(ms: number): ReactionInterpretation {
+  if (!ms || ms <= 0) {
+    return {
+      label: 'Sin datos',
+      colorClass: 'text-slate-400',
+      badgeBg: 'bg-slate-800 text-slate-300 border-slate-700',
+      description: 'Sin medición',
+    };
+  }
+  if (ms < 220) {
+    return {
+      label: 'Muy rápido / Excelente (<220ms)',
+      colorClass: 'text-emerald-400',
+      badgeBg: 'bg-emerald-950 text-emerald-400 border-emerald-700',
+      description: 'Velocidad psicométrica excelente',
+    };
+  }
+  if (ms <= 250) {
+    return {
+      label: 'Normal - Bueno (220-250ms)',
+      colorClass: 'text-teal-400',
+      badgeBg: 'bg-teal-950 text-teal-400 border-teal-700',
+      description: 'Reflejos normales superiores',
+    };
+  }
+  if (ms <= 280) {
+    return {
+      label: 'Normal - Lento (250-280ms)',
+      colorClass: 'text-blue-400',
+      badgeBg: 'bg-blue-950 text-blue-400 border-blue-700',
+      description: 'Dentro del límite APTO (Vigilar baseline)',
+    };
+  }
+  if (ms <= 350) {
+    return {
+      label: 'Lentificación Relevante (280-350ms)',
+      colorClass: 'text-amber-400',
+      badgeBg: 'bg-amber-950 text-amber-400 border-amber-700',
+      description: 'Respuesta diferida (Genera Observación)',
+    };
+  }
+  return {
+    label: 'Marcadamente Lento (>350ms)',
+    colorClass: 'text-rose-400',
+    badgeBg: 'bg-rose-950 text-rose-400 border-rose-700',
+    description: 'Tiempo de reacción crítico elevado',
+  };
+}

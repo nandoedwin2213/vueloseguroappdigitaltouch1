@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ReactionMetrics, ReactionTrial, SystemConfig, AssessmentStatus } from '../types';
 import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert, Sparkles } from 'lucide-react';
 import { soundFX } from '../services/soundService';
+import { getReactionInterpretation } from '../services/storageService';
 
 interface ReflexStepProps {
   config: SystemConfig;
@@ -164,6 +165,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
 
   const handleFinish = () => {
     soundFX.playTap();
+    const interp = getReactionInterpretation(avgMs);
     onSubmit({
       trials,
       totalTrials: trials.length,
@@ -175,6 +177,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
       incorrectCount,
       anticipatedCount,
       evaluationStatus,
+      qualitativeLabel: interp.label,
     });
   };
 
@@ -394,6 +397,45 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
               <div className="text-3xl font-black text-amber-400 font-mono">{medianMs} <span className="text-sm text-slate-400">ms</span></div>
               <div className="text-xs text-slate-500">Valor central</div>
             </div>
+          </div>
+
+          {/* Clinical & Technical Reference Table */}
+          <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3 text-xs text-slate-300">
+            <div className="font-bold text-slate-200 flex items-center justify-between flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-black">
+                <Info size={16} /> Interpretación Psicométrica Orientativa:
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${getReactionInterpretation(avgMs).badgeBg}`}>
+                {getReactionInterpretation(avgMs).label}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-[11px] font-mono text-center">
+              <div className={`p-2 rounded border ${avgMs < 220 ? 'bg-emerald-950 border-emerald-500 text-emerald-300 font-bold ring-2 ring-emerald-400' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}>
+                <strong className="block text-xs">&lt; 220 ms</strong>
+                <span>Muy rápido / excelente</span>
+              </div>
+              <div className={`p-2 rounded border ${avgMs >= 220 && avgMs <= 250 ? 'bg-teal-950 border-teal-500 text-teal-300 font-bold ring-2 ring-teal-400' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}>
+                <strong className="block text-xs">220–250 ms</strong>
+                <span>Normal - bueno</span>
+              </div>
+              <div className={`p-2 rounded border ${avgMs > 250 && avgMs <= 280 ? 'bg-blue-950 border-blue-500 text-blue-300 font-bold ring-2 ring-blue-400' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}>
+                <strong className="block text-xs">250–280 ms</strong>
+                <span>Normal - lento (Vigilar)</span>
+              </div>
+              <div className={`p-2 rounded border ${avgMs > 280 && avgMs <= 350 ? 'bg-amber-950 border-amber-500 text-amber-300 font-bold ring-2 ring-amber-400' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}>
+                <strong className="block text-xs">280–350 ms</strong>
+                <span>Lentificación relevante</span>
+              </div>
+              <div className={`p-2 rounded border ${avgMs > 350 ? 'bg-rose-950 border-rose-500 text-rose-300 font-bold ring-2 ring-rose-400' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}>
+                <strong className="block text-xs">&gt; 350 ms</strong>
+                <span>Marcadamente lento</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 pt-1 leading-relaxed border-t border-slate-900">
+              💡 <strong>Nota sobre Pantallas Táctiles & Dispositivos:</strong> El tiempo de reacción depende de la edad, fatiga, horas de sueño y dispositivo utilizado. En pruebas PVT con <strong>pantallas táctiles</strong>, la latencia de respuesta del hardware añade una media aproximada de <strong>~68.5 ms</strong>.
+            </p>
           </div>
 
           {/* Action Button */}

@@ -4,6 +4,7 @@ import { Award, AlertTriangle, XCircle, Home, CheckCircle2, Shield, HeartPulse, 
 import confetti from 'canvas-confetti';
 import { ThermalTicket } from './ThermalTicket';
 import { soundFX } from '../services/soundService';
+import { getReactionInterpretation } from '../services/storageService';
 
 interface ResultStepProps {
   record: PreFlightCheckupRecord;
@@ -318,9 +319,14 @@ export const ResultStep: React.FC<ResultStepProps> = ({
               </span>
             </div>
 
-            <div className="flex justify-between py-1 border-b border-slate-800/60">
+            <div className="flex justify-between py-1 border-b border-slate-800/60 items-center">
               <span className="text-slate-400">Promedio Reflejos:</span>
-              <span className="font-mono font-bold text-emerald-400 text-sm">{record.reaction.avgMs} ms</span>
+              <div className="text-right">
+                <span className="font-mono font-bold text-emerald-400 text-sm">{record.reaction.avgMs} ms</span>
+                <div className={`text-[10px] font-bold ${getReactionInterpretation(record.reaction.avgMs).colorClass}`}>
+                  {record.reaction.qualitativeLabel || getReactionInterpretation(record.reaction.avgMs).label}
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-between py-1 border-b border-slate-800/60">
