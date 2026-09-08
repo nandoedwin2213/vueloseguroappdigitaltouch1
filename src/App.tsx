@@ -18,6 +18,7 @@ import { ReflexStep } from './components/ReflexStep';
 import { ResultStep } from './components/ResultStep';
 import { AdminPortal } from './components/AdminPortal';
 import { AdminPinModal } from './components/AdminPinModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { soundFX } from './services/soundService';
 
 export const App: React.FC = () => {
@@ -227,70 +228,72 @@ export const App: React.FC = () => {
         onNavigateHome={() => setView('DASHBOARD')}
       />
 
-      {/* Main View Router */}
+      {/* Main View Router wrapped in ErrorBoundary */}
       <main className="flex-1 pb-12">
-        {/* PILOT KIOSK MODE (Default Launcher) */}
-        {view === 'DASHBOARD' && (
-          <MainDashboard
-            onStartNewCheckup={handleStartNewCheckup}
-            records={records}
-            config={config}
-          />
-        )}
+        <ErrorBoundary onReset={() => setView('DASHBOARD')}>
+          {/* PILOT KIOSK MODE (Default Launcher) */}
+          {view === 'DASHBOARD' && (
+            <MainDashboard
+              onStartNewCheckup={handleStartNewCheckup}
+              records={records}
+              config={config}
+            />
+          )}
 
-        {view === 'STEP1' && (
-          <RegistrationStep
-            initialData={draftPersonnel || undefined}
-            records={records}
-            onSubmit={handleRegistrationSubmit}
-            onCancel={() => setView('DASHBOARD')}
-          />
-        )}
+          {view === 'STEP1' && (
+            <RegistrationStep
+              initialData={draftPersonnel || undefined}
+              records={records}
+              onSubmit={handleRegistrationSubmit}
+              onCancel={() => setView('DASHBOARD')}
+            />
+          )}
 
-        {view === 'STEP2' && (
-          <VitalSignsStep
-            initialData={draftVitalSigns || undefined}
-            onSubmit={handleVitalSignsSubmit}
-            onBack={() => setView('STEP1')}
-          />
-        )}
+          {view === 'STEP2' && (
+            <VitalSignsStep
+              initialData={draftVitalSigns || undefined}
+              onSubmit={handleVitalSignsSubmit}
+              onBack={() => setView('STEP1')}
+            />
+          )}
 
-        {view === 'STEP3' && (
-          <ImSafeStep
-            initialData={draftImSafe || undefined}
-            onSubmit={handleImSafeSubmit}
-            onBack={() => setView('STEP2')}
-          />
-        )}
+          {view === 'STEP3' && (
+            <ImSafeStep
+              initialData={draftImSafe || undefined}
+              onSubmit={handleImSafeSubmit}
+              onBack={() => setView('STEP2')}
+            />
+          )}
 
-        {view === 'STEP4' && (
-          <ReflexStep
-            config={config}
-            onSubmit={handleReflexSubmit}
-            onBack={() => setView('STEP3')}
-          />
-        )}
+          {view === 'STEP4' && (
+            <ReflexStep
+              config={config}
+              onSubmit={handleReflexSubmit}
+              onBack={() => setView('STEP3')}
+            />
+          )}
 
-        {view === 'STEP5' && (completedRecord || records[0]) && (
-          <ResultStep
-            record={completedRecord || records[0]}
-            onNewCheckup={handleStartNewCheckup}
-            onGoHome={() => setView('DASHBOARD')}
-          />
-        )}
+          {view === 'STEP5' && (completedRecord || records[0]) && (
+            <ResultStep
+              record={completedRecord || records[0]}
+              onNewCheckup={handleStartNewCheckup}
+              onGoHome={() => setView('DASHBOARD')}
+            />
+          )}
 
-        {/* RESTRICTED ADMIN PORTAL MODE */}
-        {view === 'ADMIN_PORTAL' && isAdminUnlocked && (
-          <AdminPortal
-            records={records}
-            config={config}
-            onUpdateConfig={handleUpdateConfig}
-            onLockAdmin={() => {
-              setIsAdminUnlocked(false);
-              setView('DASHBOARD');
-            }}
-          />
-        )}
+          {/* RESTRICTED ADMIN PORTAL MODE */}
+          {view === 'ADMIN_PORTAL' && isAdminUnlocked && (
+            <AdminPortal
+              records={records}
+              config={config}
+              onUpdateConfig={handleUpdateConfig}
+              onLockAdmin={() => {
+                setIsAdminUnlocked(false);
+                setView('DASHBOARD');
+              }}
+            />
+          )}
+        </ErrorBoundary>
       </main>
 
       {/* PIN Access Unlock Modal */}
