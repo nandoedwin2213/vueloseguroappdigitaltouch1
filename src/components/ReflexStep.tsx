@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ReactionMetrics, ReactionTrial, SystemConfig, AssessmentStatus } from '../types';
-import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { Zap, Timer, CheckCircle, RotateCcw, ArrowRight, ArrowLeft, ShieldAlert, Sparkles } from 'lucide-react';
 import { soundFX } from '../services/soundService';
 
 interface ReflexStepProps {
@@ -21,44 +21,57 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
   const [testState, setTestState] = useState<TestState>('INSTRUCTIONS');
   const [currentTrialIndex, setCurrentTrialIndex] = useState<number>(1);
   const [trials, setTrials] = useState<ReactionTrial[]>([]);
-
-  // Last measured trial result for immediate visual feedback
   const [lastTrialMs, setLastTrialMs] = useState<number | null>(null);
 
-  // High-precision timestamps using performance.now()
+  // High-precision timing refs
   const stimulusStartTimeRef = useRef<number>(0);
+  const waitingStartTimeRef = useRef<number>(0);
   const timerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoNextTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Start a trial cycle
-  const startNextTrial = () => {
+  // Start trial cycle
+  const startNextTrial = useCallback(() => {
     setLastTrialMs(null);
     setTestState('WAITING');
+    waitingStartTimeRef.current = performance.now();
 
-    // Random delay between 1500ms and 4200ms
-    const randomDelay = Math.floor(Math.random() * 2700) + 1500;
+    // Random delay between 1800ms and 4000ms for unpredictability
+    const randomDelay = Math.floor(Math.random() * 2200) + 1800;
 
     if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+    if (autoNextTimeoutRef.current) clearTimeout(autoNextTimeoutRef.current);
 
     timerTimeoutRef.current = setTimeout(() => {
-      // Sincronización con el refresco de pantalla mediante requestAnimationFrame
       requestAnimationFrame(() => {
         stimulusStartTimeRef.current = performance.now();
         setTestState('STIMULUS');
         soundFX.playCue();
       });
     }, randomDelay);
-  };
+  }, []);
 
-  // Handle Touch or Click on the screen zone
-  const handleTouchZone = (e: React.SyntheticEvent) => {
-    e.preventDefault();
+  // Handle user interaction (Touch, Click, Spacebar)
+  const handleInteraction = useCallback((e?: React.SyntheticEvent | KeyboardEvent) => {
+    if (e) {
+      if ('preventDefault' in e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+      }
+    }
 
+    const now = performance.now();
+
+    // STATE: WAITING
     if (testState === 'WAITING') {
-      // Touched too early (Anticipated / Cheating)
+      // Grace period: ignore touches within 400ms of starting waiting state (prevents tap bleed from previous buttons)
+      if (now - waitingStartTimeRef.current < 400) {
+        return;
+      }
+
+      // Early touch detected (Anticipation)
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
       soundFX.playWarning();
       setTestState('ANTICIPATED_ERROR');
-      
+
       const newTrial: ReactionTrial = {
         trialIndex: currentTrialIndex,
         delayMs: 0,
@@ -72,11 +85,10 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
       return;
     }
 
+    // STATE: STIMULUS
     if (testState === 'STIMULUS') {
-      // Touch captured immediately with performance.now()
       soundFX.playTap();
-      const touchTime = performance.now();
-      const reactionTimeMs = Math.round(touchTime - stimulusStartTimeRef.current);
+      const reactionTimeMs = Math.round(now - stimulusStartTimeRef.current);
       setLastTrialMs(reactionTimeMs);
 
       const newTrial: ReactionTrial = {
@@ -84,7 +96,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
         delayMs: Math.round(stimulusStartTimeRef.current),
         reactionTimeMs,
         isAnticipated: false,
-        isCorrect: reactionTimeMs >= 120, // Valid human reflex lower bound
+        isCorrect: reactionTimeMs >= 120,
         timestamp: Date.now(),
       };
 
@@ -97,14 +109,29 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
         setTestState('TRIAL_FINISHED');
       }
     }
-  };
+  }, [testState, currentTrialIndex, totalRequiredTrials, trials]);
 
-  // Reset or Retry Test
+  // Keyboard shortcut listener (Spacebar)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        if (testState === 'WAITING' || testState === 'STIMULUS') {
+          handleInteraction(e);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [testState, handleInteraction]);
+
+  // Reset entire test
   const resetEntireTest = () => {
     soundFX.playTap();
     if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+    if (autoNextTimeoutRef.current) clearTimeout(autoNextTimeoutRef.current);
     setTrials([]);
     setCurrentTrialIndex(1);
+    setLastTrialMs(null);
     setTestState('INSTRUCTIONS');
   };
 
@@ -116,7 +143,6 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
   const maxMs = validTimes.length > 0 ? Math.max(...validTimes) : 0;
   const avgMs = validTimes.length > 0 ? Math.round(validTimes.reduce((a, b) => a + b, 0) / validTimes.length) : 0;
 
-  // Median calculation
   let medianMs = 0;
   if (validTimes.length > 0) {
     const sorted = [...validTimes].sort((a, b) => a - b);
@@ -128,7 +154,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
   const anticipatedCount = trials.filter((t) => t.isAnticipated).length;
   const incorrectCount = trials.length - correctCount - anticipatedCount;
 
-  // Compute Reaction Evaluation Status based on Config Thresholds
+  // Evaluation status rule
   let evaluationStatus: AssessmentStatus = 'APTO';
   if (avgMs > config.reactionTimeObservacionMax || anticipatedCount >= 3) {
     evaluationStatus = 'NO_APTO';
@@ -155,6 +181,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
   useEffect(() => {
     return () => {
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+      if (autoNextTimeoutRef.current) clearTimeout(autoNextTimeoutRef.current);
     };
   }, []);
 
@@ -168,7 +195,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
             <Zap className="text-emerald-400" size={28} /> Prueba de Reflejo Cerebro-Mano
           </h2>
           <p className="text-slate-400 text-xs mt-1">
-            Medición de tiempo de reacción de alta precisión en milisegundos (`performance.now()`).
+            Medición de tiempo de reacción psicométrica en milisegundos (`performance.now()`).
           </p>
         </div>
         <button
@@ -177,7 +204,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
             soundFX.playTap();
             onBack();
           }}
-          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5"
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
         >
           <ArrowLeft size={16} /> Atrás
         </button>
@@ -193,9 +220,9 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
           <div className="space-y-3 max-w-xl mx-auto">
             <h3 className="text-2xl font-black text-white">Instrucciones de la Prueba</h3>
             <p className="text-slate-300 text-sm leading-relaxed font-medium">
-              1. Mantenga su dedo a unos centímetros de la pantalla.<br />
+              1. Mantenga su dedo cerca de la pantalla (o mano sobre el ratón / tecla <kbd className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-400 font-mono">ESPACIO</kbd>).<br />
               2. La pantalla estará en color gris con el mensaje <strong className="text-amber-400">"ESPERE SEÑAL"</strong> durante un tiempo aleatorio.<br />
-              3. En cuanto la pantalla cambie a <strong className="text-emerald-400">VERDE RADIANTE 🟢</strong>, toque el objetivo lo más rápido posible.<br />
+              3. En cuanto la pantalla cambie a <strong className="text-emerald-400">VERDE RADIANTE 🟢</strong>, toque lo más rápido posible.<br />
               4. Se realizarán <strong className="text-white">{totalRequiredTrials} repeticiones</strong>. No toque antes de tiempo.
             </p>
           </div>
@@ -217,7 +244,7 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
       {/* STATE 2 & 3: TOUCH INTERACTIVE ZONE (WAITING or STIMULUS) */}
       {(testState === 'WAITING' || testState === 'STIMULUS') && (
         <div
-          onPointerDown={handleTouchZone}
+          onPointerDown={handleInteraction}
           className={`w-full min-h-[420px] rounded-3xl border-4 flex flex-col items-center justify-center p-8 text-center cursor-pointer touch-none select-none transition-colors duration-75 shadow-2xl ${
             testState === 'WAITING'
               ? 'bg-slate-900 border-slate-700 hover:bg-slate-850'
@@ -232,8 +259,11 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
               <h3 className="text-3xl font-black text-amber-400 uppercase tracking-wider">
                 ¡ESPERE SEÑAL VERDE!
               </h3>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 text-sm font-semibold">
                 Ensayo {currentTrialIndex} de {totalRequiredTrials} • No toque la pantalla aún...
+              </p>
+              <p className="text-xs text-slate-500 italic">
+                (Puedes tocar la pantalla o presionar ESPACIO al ver el color verde)
               </p>
             </div>
           )}
@@ -257,10 +287,10 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
           <div className="w-20 h-20 bg-rose-950 border-2 border-rose-500 text-rose-400 rounded-full mx-auto flex items-center justify-center">
             <ShieldAlert size={48} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-md mx-auto">
             <h3 className="text-2xl font-black text-rose-400">⚠️ RESPUESTA ANTICIPADA</h3>
             <p className="text-slate-300 text-sm">
-              Ha tocado la pantalla antes de la aparición de la señal verde. La anticipación no mide reflejos reales.
+              Has tocado antes de la aparición de la señal verde. Mantén la calma y espera el color verde.
             </p>
           </div>
 
@@ -268,9 +298,11 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
             type="button"
             onClick={() => {
               soundFX.playTap();
-              startNextTrial();
+              setTimeout(() => {
+                startNextTrial();
+              }, 250);
             }}
-            className="w-full max-w-sm mx-auto py-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full max-w-sm mx-auto py-4 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <RotateCcw size={20} /> REPETIR ENSAYO
           </button>
@@ -280,16 +312,20 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
       {/* STATE 5: INTERMEDIATE TRIAL FINISHED */}
       {testState === 'TRIAL_FINISHED' && (
         <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
-          <div className="w-20 h-20 bg-emerald-950 border-2 border-emerald-500 text-emerald-400 rounded-full mx-auto flex items-center justify-center">
+          <div className="w-20 h-20 bg-emerald-950 border-2 border-emerald-500 text-emerald-400 rounded-full mx-auto flex items-center justify-center shadow-lg shadow-emerald-950">
             <CheckCircle size={48} />
           </div>
 
           <div className="space-y-2">
-            <span className="text-xs font-bold text-slate-400 uppercase">Ensayo {currentTrialIndex} Completado</span>
-            <div className="text-5xl font-black font-mono text-emerald-400">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Ensayo {currentTrialIndex} de {totalRequiredTrials} Completado
+            </span>
+            <div className="text-5xl font-black font-mono text-emerald-400 flex items-center justify-center gap-2">
               {lastTrialMs} <span className="text-2xl text-slate-400">ms</span>
             </div>
-            <p className="text-xs text-slate-400">Tiempo de reacción registrado con éxito.</p>
+            <p className="text-xs text-slate-400">
+              {lastTrialMs && lastTrialMs < 250 ? '⚡ Reflejo Excelente (Piloto)' : '✅ Tiempo de reacción registrado.'}
+            </p>
           </div>
 
           <button
@@ -297,9 +333,11 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
             onClick={() => {
               soundFX.playTap();
               setCurrentTrialIndex((prev) => prev + 1);
-              startNextTrial();
+              setTimeout(() => {
+                startNextTrial();
+              }, 250);
             }}
-            className="w-full max-w-sm mx-auto py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full max-w-sm mx-auto py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <span>SIGUIENTE ENSAYO ({currentTrialIndex + 1}/{totalRequiredTrials}) ⚡</span>
             <ArrowRight size={20} />
@@ -313,7 +351,9 @@ export const ReflexStep: React.FC<ReflexStepProps> = ({
           <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Resultado de Reflejos</span>
-              <h3 className="text-2xl font-black text-white">Resumen de Tiempos de Reacción ⚡</h3>
+              <h3 className="text-2xl font-black text-white flex items-center gap-2">
+                Resumen de Tiempos de Reacción <Sparkles className="text-emerald-400" size={22} />
+              </h3>
             </div>
 
             <button
